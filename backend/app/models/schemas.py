@@ -34,3 +34,14 @@ class QueryLogRead(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SqlValidationRequest(BaseModel):
+    sql: str
+
+
+class SqlValidationResponse(BaseModel):
+    is_safe: bool
+    reason: str
+    normalized_sql: str
+    blocked_keywords: list[str] = []

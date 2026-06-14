@@ -24,7 +24,7 @@ Text-to-SQL can be useful, but it can also be risky if queries are generated and
 
 ## What It Does Now
 
-Milestone 2 adds the first analytics API endpoints:
+Milestone 3 adds the SQL safety validation layer:
 
 - FastAPI backend structure
 - `/health` endpoint
@@ -33,8 +33,9 @@ Milestone 2 adds the first analytics API endpoints:
 - SQLAlchemy models for customers, products, orders, order items, refunds, query logs, and feedback
 - deterministic demo seed script
 - analytics endpoints for top products, monthly revenue, refund rate, and customer segments
+- `/validate-sql` endpoint for read-only SQL safety checks
 - Docker Compose setup for backend and PostgreSQL
-- basic health, model registration, and route registration tests
+- tests for health, model registration, route registration, and SQL validation
 - CI workflow skeleton
 
 ## Architecture
@@ -47,6 +48,7 @@ backend/
       routes/
         analytics.py
         health.py
+        queries.py
     core/
       config.py
       database.py
@@ -57,16 +59,18 @@ backend/
       schemas.py
     services/
       analytics_service.py
+      sql_validation_service.py
   tests/
     test_analytics_routes.py
-    test_health.py
     test_database_models.py
+    test_health.py
+    test_sql_validation.py
 docs/
   api_examples.md
   database_schema.md
 ```
 
-Planned modules will add SQL validation, schema services, query execution, logging, feedback endpoints, and demo question mapping as the project grows.
+Planned modules will add schema services, query execution, logging, feedback endpoints, and demo question mapping as the project grows.
 
 ## Tech Stack
 
@@ -124,25 +128,25 @@ pytest
 ## Current API
 
 ```text
-GET /health
-GET /analytics/top-products
-GET /analytics/monthly-revenue
-GET /analytics/refund-rate
-GET /analytics/customer-segments
+GET  /health
+POST /validate-sql
+GET  /analytics/top-products
+GET  /analytics/monthly-revenue
+GET  /analytics/refund-rate
+GET  /analytics/customer-segments
 ```
 
 Planned endpoints:
 
 ```text
 POST /chat
-POST /validate-sql
 GET  /queries/logs
 POST /feedback
 ```
 
 ## SQL Safety Rules
 
-The SQL safety layer will allow only read-only analytics queries.
+The SQL safety layer allows only read-only analytics queries.
 
 Allowed:
 
@@ -165,11 +169,11 @@ Blocked:
 - `MERGE`
 - `CALL`
 
-It will also block multiple statements, suspicious comments, unsafe semicolons, and broad raw queries without reasonable limits.
+It also blocks multiple statements, SQL comments, suspicious semicolons, and broad `SELECT *` queries without a `LIMIT`.
 
 ## Current Status
 
-Milestone 2 is complete: the backend foundation, synthetic database model layer, and first analytics endpoints are in place. The next milestone is SQL validation.
+Milestone 3 is complete: the backend foundation, synthetic database model layer, analytics endpoints, and SQL validation layer are in place. The next milestone is demo text-to-SQL chat.
 
 ## Roadmap
 

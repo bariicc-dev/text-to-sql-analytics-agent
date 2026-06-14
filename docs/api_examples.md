@@ -12,6 +12,23 @@ curl http://localhost:8000/health
 {"status":"ok"}
 ```
 
+## Validate SQL
+
+```bash
+curl -X POST http://localhost:8000/validate-sql \
+  -H "Content-Type: application/json" \
+  -d '{"sql":"SELECT id, name FROM products LIMIT 5"}'
+```
+
+```json
+{
+  "is_safe": true,
+  "reason": "Query is read-only and passed the current safety checks.",
+  "normalized_sql": "SELECT id, name FROM products LIMIT 5",
+  "blocked_keywords": []
+}
+```
+
 ## Top Products
 
 ```bash
