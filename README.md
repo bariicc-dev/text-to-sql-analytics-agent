@@ -24,7 +24,7 @@ Text-to-SQL can be useful, but it can also be risky if queries are generated and
 
 ## What It Does Now
 
-Milestone 1 adds the synthetic e-commerce database foundation:
+Milestone 2 adds the first analytics API endpoints:
 
 - FastAPI backend structure
 - `/health` endpoint
@@ -32,8 +32,9 @@ Milestone 1 adds the synthetic e-commerce database foundation:
 - SQLAlchemy database connection foundation
 - SQLAlchemy models for customers, products, orders, order items, refunds, query logs, and feedback
 - deterministic demo seed script
+- analytics endpoints for top products, monthly revenue, refund rate, and customer segments
 - Docker Compose setup for backend and PostgreSQL
-- basic health and model registration tests
+- basic health, model registration, and route registration tests
 - CI workflow skeleton
 
 ## Architecture
@@ -44,6 +45,7 @@ backend/
     main.py
     api/
       routes/
+        analytics.py
         health.py
     core/
       config.py
@@ -53,10 +55,14 @@ backend/
     models/
       database_models.py
       schemas.py
+    services/
+      analytics_service.py
   tests/
+    test_analytics_routes.py
     test_health.py
     test_database_models.py
 docs/
+  api_examples.md
   database_schema.md
 ```
 
@@ -107,7 +113,7 @@ cd backend
 pytest
 ```
 
-## Example Questions For Future Milestones
+## Example Questions
 
 - What are the top 5 products by revenue?
 - What is the monthly revenue trend?
@@ -115,16 +121,21 @@ pytest
 - What is the refund rate by product category?
 - Which products have high revenue but also high refunds?
 
-## Planned API
+## Current API
 
 ```text
-GET  /health
+GET /health
+GET /analytics/top-products
+GET /analytics/monthly-revenue
+GET /analytics/refund-rate
+GET /analytics/customer-segments
+```
+
+Planned endpoints:
+
+```text
 POST /chat
 POST /validate-sql
-GET  /analytics/top-products
-GET  /analytics/monthly-revenue
-GET  /analytics/refund-rate
-GET  /analytics/customer-segments
 GET  /queries/logs
 POST /feedback
 ```
@@ -158,7 +169,7 @@ It will also block multiple statements, suspicious comments, unsafe semicolons, 
 
 ## Current Status
 
-Milestone 1 is complete: the backend foundation and synthetic database model layer are in place. The next milestone is analytics endpoints.
+Milestone 2 is complete: the backend foundation, synthetic database model layer, and first analytics endpoints are in place. The next milestone is SQL validation.
 
 ## Roadmap
 
