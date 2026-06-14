@@ -1,1 +1,1 @@
-"""Core application settings."""
+"""Core application utilities."""
