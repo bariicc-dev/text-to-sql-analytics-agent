@@ -24,14 +24,16 @@ Text-to-SQL can be useful, but it can also be risky if queries are generated and
 
 ## What It Does Now
 
-Milestone 0 rebuilds the project foundation:
+Milestone 1 adds the synthetic e-commerce database foundation:
 
 - FastAPI backend structure
 - `/health` endpoint
 - typed settings file
-- database connection foundation
+- SQLAlchemy database connection foundation
+- SQLAlchemy models for customers, products, orders, order items, refunds, query logs, and feedback
+- deterministic demo seed script
 - Docker Compose setup for backend and PostgreSQL
-- basic health endpoint test
+- basic health and model registration tests
 - CI workflow skeleton
 
 ## Architecture
@@ -46,11 +48,19 @@ backend/
     core/
       config.py
       database.py
+    demo/
+      seed_data.py
+    models/
+      database_models.py
+      schemas.py
   tests/
     test_health.py
+    test_database_models.py
+docs/
+  database_schema.md
 ```
 
-Planned modules will add SQL validation, schema services, query execution, logging, feedback, and demo question mapping as the project grows.
+Planned modules will add SQL validation, schema services, query execution, logging, feedback endpoints, and demo question mapping as the project grows.
 
 ## Tech Stack
 
@@ -79,6 +89,16 @@ Expected response:
 ```json
 {"status":"ok"}
 ```
+
+## Seed The Demo Database
+
+After the containers are running, seed the synthetic e-commerce data:
+
+```bash
+docker compose exec backend python -m app.demo.seed_data
+```
+
+The seed data is small on purpose. It is meant to support analytics endpoint development and manual demos without using private data.
 
 ## Run Tests
 
@@ -138,7 +158,7 @@ It will also block multiple statements, suspicious comments, unsafe semicolons, 
 
 ## Current Status
 
-Milestone 0 is the clean project foundation. The next milestone is the synthetic e-commerce database.
+Milestone 1 is complete: the backend foundation and synthetic database model layer are in place. The next milestone is analytics endpoints.
 
 ## Roadmap
 
