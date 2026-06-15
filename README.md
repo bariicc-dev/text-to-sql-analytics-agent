@@ -37,7 +37,7 @@ Milestone 4 adds the first demo text-to-SQL chat flow:
 - `/chat` endpoint with demo question mapping, validation, execution, and simple explanations
 - Docker Compose setup for backend and PostgreSQL
 - tests for health, model registration, route registration, SQL validation, and demo chat routing
-- CI workflow skeleton
+- GitHub Actions workflow for backend tests
 
 ## Architecture
 
@@ -116,12 +116,16 @@ docker compose exec backend python -m app.demo.seed_data
 
 The seed data is small on purpose. It is meant to support analytics endpoint development and manual demos without using private data.
 
-## Run Tests
+## Testing
+
+Run backend tests locally from the repository root:
 
 ```bash
 cd backend
-pytest
+python -m pytest
 ```
+
+GitHub Actions also runs the backend test workflow on pull requests.
 
 ## Example Questions
 
