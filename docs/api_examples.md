@@ -12,6 +12,16 @@ curl http://localhost:8000/health
 {"status":"ok"}
 ```
 
+## Chat
+
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"question":"What are the top 5 products by revenue?"}'
+```
+
+The response includes an answer, generated SQL, rows, explanation, safety status, and source.
+
 ## Validate SQL
 
 ```bash

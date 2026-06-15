@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -45,3 +46,16 @@ class SqlValidationResponse(BaseModel):
     reason: str
     normalized_sql: str
     blocked_keywords: list[str] = []
+
+
+class ChatRequest(BaseModel):
+    question: str
+
+
+class ChatResponse(BaseModel):
+    answer: str
+    sql: str | None
+    rows: list[dict[str, Any]]
+    explanation: str
+    safety_status: str
+    source: str

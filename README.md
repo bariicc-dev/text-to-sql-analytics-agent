@@ -24,7 +24,7 @@ Text-to-SQL can be useful, but it can also be risky if queries are generated and
 
 ## What It Does Now
 
-Milestone 3 adds the SQL safety validation layer:
+Milestone 4 adds the first demo text-to-SQL chat flow:
 
 - FastAPI backend structure
 - `/health` endpoint
@@ -34,8 +34,9 @@ Milestone 3 adds the SQL safety validation layer:
 - deterministic demo seed script
 - analytics endpoints for top products, monthly revenue, refund rate, and customer segments
 - `/validate-sql` endpoint for read-only SQL safety checks
+- `/chat` endpoint with demo question mapping, validation, execution, and simple explanations
 - Docker Compose setup for backend and PostgreSQL
-- tests for health, model registration, route registration, and SQL validation
+- tests for health, model registration, route registration, SQL validation, and demo chat routing
 - CI workflow skeleton
 
 ## Architecture
@@ -47,6 +48,7 @@ backend/
     api/
       routes/
         analytics.py
+        chat.py
         health.py
         queries.py
     core/
@@ -59,9 +61,13 @@ backend/
       schemas.py
     services/
       analytics_service.py
+      demo_sql_generation_service.py
+      explanation_service.py
+      query_execution_service.py
       sql_validation_service.py
   tests/
     test_analytics_routes.py
+    test_chat.py
     test_database_models.py
     test_health.py
     test_sql_validation.py
@@ -70,7 +76,7 @@ docs/
   database_schema.md
 ```
 
-Planned modules will add schema services, query execution, logging, feedback endpoints, and demo question mapping as the project grows.
+Planned modules will add richer schema services, query logs, feedback endpoints, and evaluation as the project grows.
 
 ## Tech Stack
 
@@ -123,12 +129,12 @@ pytest
 - What is the monthly revenue trend?
 - Which customer segment generates the most revenue?
 - What is the refund rate by product category?
-- Which products have high revenue but also high refunds?
 
 ## Current API
 
 ```text
 GET  /health
+POST /chat
 POST /validate-sql
 GET  /analytics/top-products
 GET  /analytics/monthly-revenue
@@ -139,7 +145,6 @@ GET  /analytics/customer-segments
 Planned endpoints:
 
 ```text
-POST /chat
 GET  /queries/logs
 POST /feedback
 ```
@@ -173,7 +178,7 @@ It also blocks multiple statements, SQL comments, suspicious semicolons, and bro
 
 ## Current Status
 
-Milestone 3 is complete: the backend foundation, synthetic database model layer, analytics endpoints, and SQL validation layer are in place. The next milestone is demo text-to-SQL chat.
+Milestone 4 is complete: demo mode can map common analytics questions to safe SQL, validate the SQL, execute it, and return structured results. The next milestone is query logs and feedback.
 
 ## Roadmap
 
