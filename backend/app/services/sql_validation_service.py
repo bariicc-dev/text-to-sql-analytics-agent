@@ -21,7 +21,7 @@ BLOCKED_KEYWORDS = {
 _ALLOWED_PREFIXES = ("SELECT", "WITH")
 _COMMENT_PATTERNS = ("--", "/*", "*/")
 _LIMIT_PATTERN = re.compile(r"\bLIMIT\s+\d+\b", re.IGNORECASE)
-_SELECT_STAR_PATTERN = re.compile(r"\bSELECT\s+\*\b", re.IGNORECASE)
+_SELECT_STAR_PATTERN = re.compile(r"\bSELECT\s+\*", re.IGNORECASE)
 _WORD_PATTERN = re.compile(r"\b[A-Z_]+\b")
 
 
