@@ -2,7 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CustomerRead(BaseModel):
@@ -32,6 +32,24 @@ class QueryLogRead(BaseModel):
     generated_sql: str | None
     safety_status: str
     error_message: str | None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FeedbackCreate(BaseModel):
+    query_log_id: int
+    rating: int = Field(ge=1, le=5)
+    comment: str | None = None
+    customer_id: int | None = None
+
+
+class FeedbackRead(BaseModel):
+    id: int
+    query_log_id: int
+    rating: int
+    comment: str | None
+    customer_id: int | None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
