@@ -20,7 +20,39 @@ curl -X POST http://localhost:8000/chat \
   -d '{"question":"What are the top 5 products by revenue?"}'
 ```
 
-The response includes an answer, generated SQL, rows, explanation, safety status, and source.
+The response includes an answer, SQL, rows, explanation, safety status, and source. The interaction is also saved in query logs.
+
+## Query Logs
+
+```bash
+curl "http://localhost:8000/queries/logs?limit=20"
+```
+
+Filter by safety status:
+
+```bash
+curl "http://localhost:8000/queries/logs?safety_status=safe"
+```
+
+Read one query log:
+
+```bash
+curl http://localhost:8000/queries/logs/1
+```
+
+## Feedback
+
+```bash
+curl -X POST http://localhost:8000/feedback \
+  -H "Content-Type: application/json" \
+  -d '{"query_log_id":1,"rating":5,"comment":"Useful answer"}'
+```
+
+List feedback for a query log:
+
+```bash
+curl http://localhost:8000/feedback/query/1
+```
 
 ## Validate SQL
 

@@ -22,9 +22,11 @@ Text-to-SQL can be useful, but it can also be risky if queries are generated and
 10. collect feedback
 11. evaluate the agent with test questions
 
+Query logs and feedback are important because a Text-to-SQL agent should not be a black box. I want to track what was asked, what SQL was generated, whether it was safe, and whether the answer was useful.
+
 ## What It Does Now
 
-Milestone 4 adds the first demo text-to-SQL chat flow:
+Milestone 5 adds query history, a feedback endpoint, and logged chat interactions:
 
 - FastAPI backend structure
 - `/health` endpoint
@@ -34,9 +36,11 @@ Milestone 4 adds the first demo text-to-SQL chat flow:
 - deterministic demo seed script
 - analytics endpoints for top products, monthly revenue, refund rate, and customer segments
 - `/validate-sql` endpoint for read-only SQL safety checks
-- `/chat` endpoint with demo question mapping, validation, execution, and simple explanations
+- `/chat` endpoint with demo question mapping, validation, execution, simple explanations, and query logging
+- query log endpoints for reviewing recent chat interactions
+- feedback endpoints linked to query logs
 - Docker Compose setup for backend and PostgreSQL
-- tests for health, model registration, route registration, SQL validation, and demo chat routing
+- tests for health, model registration, route registration, SQL validation, demo chat routing, query logs, and feedback
 - GitHub Actions workflow for backend tests
 
 ## Architecture
@@ -49,6 +53,7 @@ backend/
       routes/
         analytics.py
         chat.py
+        feedback.py
         health.py
         queries.py
     core/
@@ -61,8 +66,11 @@ backend/
       schemas.py
     services/
       analytics_service.py
+      chat_service.py
       demo_sql_generation_service.py
       explanation_service.py
+      feedback_service.py
+      logging_service.py
       query_execution_service.py
       sql_validation_service.py
   tests/
@@ -70,13 +78,14 @@ backend/
     test_chat.py
     test_database_models.py
     test_health.py
+    test_query_logs_feedback.py
     test_sql_validation.py
 docs/
   api_examples.md
   database_schema.md
 ```
 
-Planned modules will add richer schema services, query logs, feedback endpoints, and evaluation as the project grows.
+Planned modules will add evaluation and a provider interface while keeping demo mode as the default.
 
 ## Tech Stack
 
@@ -140,17 +149,14 @@ GitHub Actions also runs the backend test workflow on pull requests.
 GET  /health
 POST /chat
 POST /validate-sql
+GET  /queries/logs
+GET  /queries/logs/{query_log_id}
+POST /feedback
+GET  /feedback/query/{query_log_id}
 GET  /analytics/top-products
 GET  /analytics/monthly-revenue
 GET  /analytics/refund-rate
 GET  /analytics/customer-segments
-```
-
-Planned endpoints:
-
-```text
-GET  /queries/logs
-POST /feedback
 ```
 
 ## SQL Safety Rules
@@ -182,7 +188,7 @@ It also blocks multiple statements, SQL comments, suspicious semicolons, and bro
 
 ## Current Status
 
-Milestone 4 is complete: demo mode can map common analytics questions to safe SQL, validate the SQL, execute it, and return structured results. The next milestone is query logs and feedback.
+Milestone 5 is complete: chat interactions are logged, recent query logs can be reviewed, and feedback can be attached to a query log. The next milestone is evaluation with demo business questions.
 
 ## Roadmap
 

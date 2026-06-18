@@ -11,8 +11,8 @@ QueryPilot uses a small synthetic e-commerce database. The data is fake and desi
 | `orders` | Order headers with status, date, customer, and sales channel. |
 | `order_items` | Product line items for each order. |
 | `refunds` | Refund records connected to orders and products. |
-| `query_logs` | Future query history for questions, SQL, safety status, and errors. |
-| `feedback` | Future feedback linked to query logs and optionally customers. |
+| `query_logs` | Query history for questions, SQL, safety status, and errors. |
+| `feedback` | Feedback linked to query logs and optionally customers. |
 
 ## Relationships
 
