@@ -54,6 +54,20 @@ List feedback for a query log:
 curl http://localhost:8000/feedback/query/1
 ```
 
+## Evaluation
+
+List evaluation cases:
+
+```bash
+curl http://localhost:8000/evaluation/cases
+```
+
+Run the evaluation suite:
+
+```bash
+curl -X POST http://localhost:8000/evaluation/run
+```
+
 ## Validate SQL
 
 ```bash
