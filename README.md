@@ -1,14 +1,14 @@
 # QueryPilot: Safe Text-to-SQL Analytics Agent
 
-QueryPilot is a personal Data & AI Engineering project where I am building a safe analytics agent that can answer business questions using SQL.
+This is a personal Data & AI Engineering project where I am building a safe Text-to-SQL analytics agent step by step.
 
-The goal is not just to generate SQL. The goal is to make the workflow safer, more transparent, and easier to evaluate.
+The goal is not only to generate SQL. I also want to validate it, execute it safely, keep query history, collect feedback, and later evaluate the system with demo questions.
 
-I am building this project step by step to practice backend APIs, PostgreSQL, SQL validation, data modeling, and AI-assisted analytics workflows using only synthetic demo data.
+For now, the project uses synthetic e-commerce data and a simple demo question mapping. There is no external model required yet.
 
 ## Why I Am Building It
 
-Text-to-SQL can be useful, but it can also be risky if queries are generated and executed without checks. This project focuses on the controlled backend workflow around analytics questions:
+Text-to-SQL can be useful, but it can also be risky if queries are generated and executed without checks. This project focuses on the backend workflow around analytics questions:
 
 1. understand the user question
 2. inspect the database schema
@@ -22,7 +22,7 @@ Text-to-SQL can be useful, but it can also be risky if queries are generated and
 10. collect feedback
 11. evaluate the agent with test questions
 
-Query logs and feedback are important because a Text-to-SQL agent should not be a black box. I want to track what was asked, what SQL was generated, whether it was safe, and whether the answer was useful.
+A Text-to-SQL agent should not be a black box. I want to track what was asked, what SQL was generated, whether it was safe, and whether the answer was useful.
 
 ## What It Does Now
 
@@ -85,7 +85,7 @@ docs/
   database_schema.md
 ```
 
-Planned modules will add evaluation and a provider interface while keeping demo mode as the default.
+The project is intentionally kept small. Each milestone should be easy to run, test, and explain.
 
 ## Tech Stack
 
@@ -188,14 +188,45 @@ It also blocks multiple statements, SQL comments, suspicious semicolons, and bro
 
 ## Current Status
 
-Milestone 5 is complete: chat interactions are logged, recent query logs can be reviewed, and feedback can be attached to a query log. The next milestone is evaluation with demo business questions.
+Safe demo Text-to-SQL backend:
+
+- demo question mapping
+- safe SQL validation
+- analytics endpoints
+- query history
+- feedback
 
 ## Roadmap
 
-1. Demo database with customers, products, orders, order items, refunds, query logs, and feedback.
-2. Analytics endpoints for top products, monthly revenue, refund rate, and customer segments.
-3. SQL validation with clear safety reasons.
-4. Demo text-to-SQL chat flow without requiring an external API key.
-5. Query logs and feedback endpoints.
-6. Evaluation suite with demo business questions.
-7. Provider interface for future model integration while keeping demo mode as the default.
+### Next Milestone
+
+Evaluation suite:
+
+- list of demo business questions
+- expected query category
+- expected safety status
+- simple test runner
+- evaluation report
+
+### After That
+
+LLM provider interface:
+
+- keep demo provider as default
+- add a clean interface for future LLM integration
+- no API key required for the basic demo
+
+### Later
+
+Schema-aware generation:
+
+- expose database schema to the agent
+- make the agent aware of table names, columns, and relationships
+- still validate every SQL query before execution
+
+Small UI or docs demo:
+
+- screenshots
+- example questions
+- simple API walkthrough
+- maybe a lightweight demo page only if the backend is stable

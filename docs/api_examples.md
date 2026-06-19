@@ -20,9 +20,9 @@ curl -X POST http://localhost:8000/chat \
   -d '{"question":"What are the top 5 products by revenue?"}'
 ```
 
-The response includes an answer, SQL, rows, explanation, safety status, and source. The interaction is also saved in query logs.
+The response includes an answer, SQL, rows, explanation, safety status, and source. The interaction is also saved in query history.
 
-## Query Logs
+## Query History
 
 ```bash
 curl "http://localhost:8000/queries/logs?limit=20"
