@@ -55,6 +55,34 @@ class FeedbackRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class EvaluationCaseRead(BaseModel):
+    id: int
+    question: str
+    expected_category: str
+    expected_safety_status: str
+    should_match_demo_query: bool
+    notes: str
+
+
+class EvaluationResult(BaseModel):
+    id: int
+    question: str
+    expected_category: str
+    actual_category: str
+    expected_safety_status: str
+    actual_safety_status: str
+    passed: bool
+    reason: str
+
+
+class EvaluationRunSummary(BaseModel):
+    total_cases: int
+    passed: int
+    failed: int
+    pass_rate: float
+    results: list[EvaluationResult]
+
+
 class SqlValidationRequest(BaseModel):
     sql: str
 
