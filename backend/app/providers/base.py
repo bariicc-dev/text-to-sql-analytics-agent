@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Any, Protocol
 
 
 @dataclass(frozen=True)
@@ -13,5 +13,5 @@ class QueryCandidate:
 
 
 class QueryProvider(Protocol):
-    def generate_query(self, question: str) -> QueryCandidate:
+    def generate_query(self, question: str, schema_context: Any | None = None) -> QueryCandidate:
         ...
