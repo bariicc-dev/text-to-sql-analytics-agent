@@ -68,6 +68,26 @@ Run the evaluation suite:
 curl -X POST http://localhost:8000/evaluation/run
 ```
 
+## Schema Context
+
+Read the full schema context:
+
+```bash
+curl http://localhost:8000/schema
+```
+
+Read one table context:
+
+```bash
+curl http://localhost:8000/schema/tables/products
+```
+
+Read the compact schema context:
+
+```bash
+curl http://localhost:8000/schema/compact
+```
+
 ## Validate SQL
 
 ```bash
