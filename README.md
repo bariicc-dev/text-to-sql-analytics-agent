@@ -26,7 +26,7 @@ A Text-to-SQL agent should not be a black box. I want to track what was asked, w
 
 ## What It Does Now
 
-Milestone 7 adds a provider interface while keeping demo mode as the default:
+Milestone 8 adds the first skeleton for future LLM provider support:
 
 - FastAPI backend structure
 - `/health` endpoint
@@ -42,8 +42,9 @@ Milestone 7 adds a provider interface while keeping demo mode as the default:
 - evaluation cases for normal, unsupported, and unsafe questions
 - evaluation endpoints for listing cases and running the suite
 - demo query provider that runs without external services
+- LLM provider skeleton that does not call any external service yet
 - Docker Compose setup for backend and PostgreSQL
-- tests for health, model registration, route registration, SQL validation, demo chat routing, query logs, feedback, evaluation, and the demo provider
+- tests for health, model registration, route registration, SQL validation, demo chat routing, query logs, feedback, evaluation, and provider selection
 - GitHub Actions workflow for backend tests
 
 ## Architecture
@@ -73,6 +74,7 @@ backend/
       base.py
       demo_provider.py
       factory.py
+      llm_provider.py
     services/
       analytics_service.py
       chat_service.py
@@ -160,6 +162,14 @@ The default provider is configured with:
 QUERY_PROVIDER=demo
 ```
 
+## Future LLM Support
+
+For now, QueryPilot uses the demo provider by default. This keeps the project easy to run locally and avoids depending on external APIs.
+
+The provider structure is prepared so a real LLM provider can be added later, for example NVIDIA-hosted models or another API provider. Even then, generated SQL will still go through the validation layer before execution.
+
+The current LLM provider path is only a skeleton. It does not call an external model and does not require an API key.
+
 ## Evaluation
 
 The project includes a small evaluation suite for the demo agent.
@@ -225,6 +235,7 @@ It also blocks multiple statements, SQL comments, suspicious semicolons, and bro
 Safe demo Text-to-SQL backend:
 
 - demo provider as the default query provider
+- LLM provider skeleton for future work
 - safe SQL validation
 - analytics endpoints
 - query history
@@ -235,20 +246,20 @@ Safe demo Text-to-SQL backend:
 
 ### Next Milestone
 
+Schema context:
+
+- expose database schema to the agent
+- make table names, columns, and relationships available to future providers
+- keep SQL validation mandatory before execution
+
+### Later
+
 Future LLM provider:
 
 - keep demo provider as default
 - add a real provider behind the interface
 - no API key required for the basic demo
 - SQL validation remains mandatory before execution
-
-### Later
-
-Schema-aware generation:
-
-- expose database schema to the agent
-- make the agent aware of table names, columns, and relationships
-- still validate every SQL query before execution
 
 Small UI or docs demo:
 
