@@ -26,7 +26,7 @@ A Text-to-SQL agent should not be a black box. I want to track what was asked, w
 
 ## What It Does Now
 
-Milestone 6 adds a small evaluation suite for the demo agent:
+Milestone 7 adds a provider interface while keeping demo mode as the default:
 
 - FastAPI backend structure
 - `/health` endpoint
@@ -36,13 +36,14 @@ Milestone 6 adds a small evaluation suite for the demo agent:
 - deterministic demo seed script
 - analytics endpoints for top products, monthly revenue, refund rate, and customer segments
 - `/validate-sql` endpoint for read-only SQL safety checks
-- `/chat` endpoint with demo question mapping, validation, execution, simple explanations, and query logging
+- `/chat` endpoint with provider-based query generation, validation, execution, simple explanations, and query logging
 - query log endpoints for reviewing recent chat interactions
 - feedback endpoints linked to query logs
 - evaluation cases for normal, unsupported, and unsafe questions
 - evaluation endpoints for listing cases and running the suite
+- demo query provider that runs without external services
 - Docker Compose setup for backend and PostgreSQL
-- tests for health, model registration, route registration, SQL validation, demo chat routing, query logs, feedback, and evaluation
+- tests for health, model registration, route registration, SQL validation, demo chat routing, query logs, feedback, evaluation, and the demo provider
 - GitHub Actions workflow for backend tests
 
 ## Architecture
@@ -68,6 +69,10 @@ backend/
     models/
       database_models.py
       schemas.py
+    providers/
+      base.py
+      demo_provider.py
+      factory.py
     services/
       analytics_service.py
       chat_service.py
@@ -84,6 +89,7 @@ backend/
     test_database_models.py
     test_evaluation.py
     test_health.py
+    test_provider.py
     test_query_logs_feedback.py
     test_sql_validation.py
 docs/
@@ -141,6 +147,18 @@ python -m pytest
 ```
 
 GitHub Actions also runs the backend test workflow on pull requests.
+
+## Provider Interface
+
+For now, QueryPilot uses a demo provider that maps known business questions to SQL templates. I kept it this way on purpose so the project can run locally without external services.
+
+The provider interface makes it easier to add a real LLM later, while still keeping SQL validation as a required safety step.
+
+The default provider is configured with:
+
+```text
+QUERY_PROVIDER=demo
+```
 
 ## Evaluation
 
@@ -206,7 +224,7 @@ It also blocks multiple statements, SQL comments, suspicious semicolons, and bro
 
 Safe demo Text-to-SQL backend:
 
-- demo question mapping
+- demo provider as the default query provider
 - safe SQL validation
 - analytics endpoints
 - query history
@@ -217,11 +235,12 @@ Safe demo Text-to-SQL backend:
 
 ### Next Milestone
 
-LLM provider interface:
+Future LLM provider:
 
 - keep demo provider as default
-- add a clean interface for future LLM integration
+- add a real provider behind the interface
 - no API key required for the basic demo
+- SQL validation remains mandatory before execution
 
 ### Later
 

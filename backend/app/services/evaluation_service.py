@@ -2,7 +2,8 @@ from dataclasses import asdict
 
 from app.demo.evaluation_questions import EVALUATION_CASES, EvaluationCase
 from app.models.schemas import EvaluationCaseRead, EvaluationResult, EvaluationRunSummary
-from app.services.demo_sql_generation_service import generate_demo_sql, has_unsafe_intent
+from app.providers.base import QueryProvider
+from app.providers.factory import get_query_provider
 from app.services.sql_validation_service import validate_sql
 
 
@@ -10,8 +11,9 @@ def list_evaluation_cases() -> list[EvaluationCaseRead]:
     return [EvaluationCaseRead(**asdict(case)) for case in EVALUATION_CASES]
 
 
-def run_evaluation_suite() -> EvaluationRunSummary:
-    results = [_evaluate_case(case) for case in EVALUATION_CASES]
+def run_evaluation_suite(provider: QueryProvider | None = None) -> EvaluationRunSummary:
+    query_provider = provider or get_query_provider()
+    results = [_evaluate_case(case, query_provider) for case in EVALUATION_CASES]
     passed_count = sum(1 for result in results if result.passed)
     total_cases = len(results)
     failed_count = total_cases - passed_count
@@ -26,11 +28,11 @@ def run_evaluation_suite() -> EvaluationRunSummary:
     )
 
 
-def _evaluate_case(case: EvaluationCase) -> EvaluationResult:
-    demo_query = generate_demo_sql(case.question)
-    actual_category = demo_query.category if demo_query is not None else "unsupported"
-    actual_safety_status = _get_safety_status(case.question, demo_query.sql if demo_query else None)
-    matched_demo_query = demo_query is not None
+def _evaluate_case(case: EvaluationCase, provider: QueryProvider) -> EvaluationResult:
+    candidate = provider.generate_query(case.question)
+    actual_category = candidate.category
+    actual_safety_status = _get_safety_status(candidate.sql, candidate.safety_status)
+    matched_demo_query = candidate.sql is not None
 
     passed = (
         actual_category == case.expected_category
@@ -58,9 +60,9 @@ def _evaluate_case(case: EvaluationCase) -> EvaluationResult:
     )
 
 
-def _get_safety_status(question: str, sql: str | None) -> str:
+def _get_safety_status(sql: str | None, provider_safety_status: str) -> str:
     if sql is None:
-        return "blocked" if has_unsafe_intent(question) else "not_generated"
+        return provider_safety_status
 
     validation = validate_sql(sql)
     return "safe" if validation.is_safe else "blocked"

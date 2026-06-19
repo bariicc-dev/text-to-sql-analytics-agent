@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 
 from app.models.schemas import ChatResponse
-from app.services.demo_sql_generation_service import FALLBACK_MESSAGE, generate_demo_sql
+from app.providers.demo_provider import FALLBACK_MESSAGE
+from app.providers.factory import get_query_provider
 from app.services.explanation_service import explain_result
 from app.services.logging_service import create_query_log
 from app.services.query_execution_service import execute_read_query
@@ -12,25 +13,26 @@ _EXECUTION_ERROR_MESSAGE = "The query could not be executed safely."
 
 
 def answer_question(question: str, db: Session) -> ChatResponse:
-    demo_query = generate_demo_sql(question)
-    if demo_query is None:
+    candidate = get_query_provider().generate_query(question)
+    if candidate.sql is None:
+        reason = candidate.reason or _NO_MATCH_MESSAGE
         create_query_log(
             db=db,
             question=question,
             generated_sql=None,
-            safety_status="not_generated",
-            error_message=_NO_MATCH_MESSAGE,
+            safety_status=candidate.safety_status,
+            error_message=reason,
         )
         return ChatResponse(
             answer=FALLBACK_MESSAGE,
             sql=None,
             rows=[],
-            explanation=_NO_MATCH_MESSAGE,
-            safety_status="not_generated",
-            source="demo",
+            explanation=reason,
+            safety_status=candidate.safety_status,
+            source=candidate.source,
         )
 
-    validation = validate_sql(demo_query.sql)
+    validation = validate_sql(candidate.sql)
     if not validation.is_safe:
         create_query_log(
             db=db,
@@ -45,7 +47,7 @@ def answer_question(question: str, db: Session) -> ChatResponse:
             rows=[],
             explanation=validation.reason,
             safety_status="blocked",
-            source=demo_query.source,
+            source=candidate.source,
         )
 
     try:
@@ -64,7 +66,7 @@ def answer_question(question: str, db: Session) -> ChatResponse:
             rows=[],
             explanation=_EXECUTION_ERROR_MESSAGE,
             safety_status="error",
-            source=demo_query.source,
+            source=candidate.source,
         )
 
     create_query_log(
@@ -82,5 +84,5 @@ def answer_question(question: str, db: Session) -> ChatResponse:
         rows=rows,
         explanation=explanation,
         safety_status="safe",
-        source=demo_query.source,
+        source=candidate.source,
     )
