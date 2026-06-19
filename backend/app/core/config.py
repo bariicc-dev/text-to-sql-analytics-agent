@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     app_name: str = "QueryPilot"
     app_env: str = "local"
     database_url: str = "postgresql+psycopg://postgres:postgres@postgres:5432/querypilot"
+    query_provider: str = "demo"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
