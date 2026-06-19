@@ -12,6 +12,7 @@ def test_demo_sql_generation_for_top_products() -> None:
     query = generate_demo_sql("What are the top 5 products by revenue?")
 
     assert query is not None
+    assert query.category == "top_products"
     assert "FROM products" in query.sql
     assert "LIMIT 5" in query.sql
 
@@ -20,6 +21,7 @@ def test_demo_sql_generation_for_monthly_revenue() -> None:
     query = generate_demo_sql("What is the monthly revenue trend?")
 
     assert query is not None
+    assert query.category == "monthly_revenue"
     assert "EXTRACT(MONTH" in query.sql
 
 
