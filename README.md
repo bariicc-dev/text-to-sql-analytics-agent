@@ -2,7 +2,7 @@
 
 This is a personal Data & AI Engineering project where I am building a safe Text-to-SQL analytics agent step by step.
 
-The goal is not only to generate SQL. I also want to validate it, execute it safely, keep query history, collect feedback, and later evaluate the system with demo questions.
+The goal is not only to generate SQL. I also want to validate it, execute it safely, keep query history, collect feedback, and evaluate the system with demo questions.
 
 For now, the project uses synthetic e-commerce data and a simple demo question mapping. There is no external model required yet.
 
@@ -26,7 +26,7 @@ A Text-to-SQL agent should not be a black box. I want to track what was asked, w
 
 ## What It Does Now
 
-Milestone 5 adds query history, a feedback endpoint, and logged chat interactions:
+Milestone 6 adds a small evaluation suite for the demo agent:
 
 - FastAPI backend structure
 - `/health` endpoint
@@ -39,8 +39,10 @@ Milestone 5 adds query history, a feedback endpoint, and logged chat interaction
 - `/chat` endpoint with demo question mapping, validation, execution, simple explanations, and query logging
 - query log endpoints for reviewing recent chat interactions
 - feedback endpoints linked to query logs
+- evaluation cases for normal, unsupported, and unsafe questions
+- evaluation endpoints for listing cases and running the suite
 - Docker Compose setup for backend and PostgreSQL
-- tests for health, model registration, route registration, SQL validation, demo chat routing, query logs, and feedback
+- tests for health, model registration, route registration, SQL validation, demo chat routing, query logs, feedback, and evaluation
 - GitHub Actions workflow for backend tests
 
 ## Architecture
@@ -53,6 +55,7 @@ backend/
       routes/
         analytics.py
         chat.py
+        evaluation.py
         feedback.py
         health.py
         queries.py
@@ -60,6 +63,7 @@ backend/
       config.py
       database.py
     demo/
+      evaluation_questions.py
       seed_data.py
     models/
       database_models.py
@@ -68,6 +72,7 @@ backend/
       analytics_service.py
       chat_service.py
       demo_sql_generation_service.py
+      evaluation_service.py
       explanation_service.py
       feedback_service.py
       logging_service.py
@@ -77,6 +82,7 @@ backend/
     test_analytics_routes.py
     test_chat.py
     test_database_models.py
+    test_evaluation.py
     test_health.py
     test_query_logs_feedback.py
     test_sql_validation.py
@@ -136,6 +142,14 @@ python -m pytest
 
 GitHub Actions also runs the backend test workflow on pull requests.
 
+## Evaluation
+
+The project includes a small evaluation suite for the demo agent.
+
+Since this project is about safe Text-to-SQL, I do not want to only test happy paths. The evaluation cases include normal business questions, unsupported questions, and unsafe questions.
+
+The suite checks whether known business questions are mapped to the expected query category, whether unsupported questions are handled cleanly, and whether unsafe questions are blocked.
+
 ## Example Questions
 
 - What are the top 5 products by revenue?
@@ -153,6 +167,8 @@ GET  /queries/logs
 GET  /queries/logs/{query_log_id}
 POST /feedback
 GET  /feedback/query/{query_log_id}
+GET  /evaluation/cases
+POST /evaluation/run
 GET  /analytics/top-products
 GET  /analytics/monthly-revenue
 GET  /analytics/refund-rate
@@ -195,20 +211,11 @@ Safe demo Text-to-SQL backend:
 - analytics endpoints
 - query history
 - feedback
+- evaluation suite
 
 ## Roadmap
 
 ### Next Milestone
-
-Evaluation suite:
-
-- list of demo business questions
-- expected query category
-- expected safety status
-- simple test runner
-- evaluation report
-
-### After That
 
 LLM provider interface:
 
