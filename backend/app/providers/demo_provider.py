@@ -1,3 +1,5 @@
+from typing import Any
+
 from app.providers.base import QueryCandidate
 
 FALLBACK_MESSAGE = (
@@ -11,7 +13,7 @@ _UNSAFE_QUESTION_TERMS = ("delete", "update", "drop", "truncate", "insert", "alt
 class DemoQueryProvider:
     source = "demo"
 
-    def generate_query(self, question: str) -> QueryCandidate:
+    def generate_query(self, question: str, schema_context: Any | None = None) -> QueryCandidate:
         normalized_question = question.lower().strip()
 
         if has_unsafe_intent(question):

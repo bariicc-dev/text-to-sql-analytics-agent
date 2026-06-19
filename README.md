@@ -26,7 +26,7 @@ A Text-to-SQL agent should not be a black box. I want to track what was asked, w
 
 ## What It Does Now
 
-Milestone 8 adds the first skeleton for future LLM provider support:
+Milestone 9 adds schema context for the demo database:
 
 - FastAPI backend structure
 - `/health` endpoint
@@ -41,10 +41,11 @@ Milestone 8 adds the first skeleton for future LLM provider support:
 - feedback endpoints linked to query logs
 - evaluation cases for normal, unsupported, and unsafe questions
 - evaluation endpoints for listing cases and running the suite
+- schema context endpoints for tables, columns, relationships, and compact provider context
 - demo query provider that runs without external services
 - LLM provider skeleton that does not call any external service yet
 - Docker Compose setup for backend and PostgreSQL
-- tests for health, model registration, route registration, SQL validation, demo chat routing, query logs, feedback, evaluation, and provider selection
+- tests for health, model registration, route registration, SQL validation, demo chat routing, query logs, feedback, evaluation, providers, and schema context
 - GitHub Actions workflow for backend tests
 
 ## Architecture
@@ -61,6 +62,7 @@ backend/
         feedback.py
         health.py
         queries.py
+        schema_context.py
     core/
       config.py
       database.py
@@ -75,6 +77,10 @@ backend/
       demo_provider.py
       factory.py
       llm_provider.py
+    schema_context/
+      catalog.py
+      models.py
+      service.py
     services/
       analytics_service.py
       chat_service.py
@@ -93,6 +99,7 @@ backend/
     test_health.py
     test_provider.py
     test_query_logs_feedback.py
+    test_schema_context.py
     test_sql_validation.py
 docs/
   api_examples.md
@@ -162,6 +169,12 @@ The default provider is configured with:
 QUERY_PROVIDER=demo
 ```
 
+## Schema Context
+
+Before adding a real LLM provider, I added a schema context layer. It describes the demo database tables, columns, relationships, and business meaning.
+
+This gives future providers the information they need to generate better SQL, while the validation layer still checks every query before execution.
+
 ## Future LLM Support
 
 For now, QueryPilot uses the demo provider by default. This keeps the project easy to run locally and avoids depending on external APIs.
@@ -197,6 +210,9 @@ POST /feedback
 GET  /feedback/query/{query_log_id}
 GET  /evaluation/cases
 POST /evaluation/run
+GET  /schema
+GET  /schema/tables/{table_name}
+GET  /schema/compact
 GET  /analytics/top-products
 GET  /analytics/monthly-revenue
 GET  /analytics/refund-rate
@@ -235,6 +251,7 @@ It also blocks multiple statements, SQL comments, suspicious semicolons, and bro
 Safe demo Text-to-SQL backend:
 
 - demo provider as the default query provider
+- schema context for the demo database
 - LLM provider skeleton for future work
 - safe SQL validation
 - analytics endpoints
@@ -246,10 +263,10 @@ Safe demo Text-to-SQL backend:
 
 ### Next Milestone
 
-Schema context:
+Prompt context builder:
 
-- expose database schema to the agent
-- make table names, columns, and relationships available to future providers
+- use schema context to build provider-ready prompt context
+- keep demo provider as the default path
 - keep SQL validation mandatory before execution
 
 ### Later

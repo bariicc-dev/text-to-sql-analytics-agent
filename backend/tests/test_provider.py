@@ -3,6 +3,7 @@ import pytest
 from app.providers.demo_provider import DemoQueryProvider
 from app.providers.factory import UnknownQueryProviderError, get_query_provider
 from app.providers.llm_provider import LLMQueryProvider
+from app.schema_context.service import get_schema_context
 
 
 def test_default_provider_is_demo() -> None:
@@ -25,6 +26,15 @@ def test_demo_provider_returns_monthly_revenue_category() -> None:
     provider = DemoQueryProvider()
 
     candidate = provider.generate_query("Show me monthly revenue.")
+
+    assert candidate.category == "monthly_revenue"
+    assert candidate.sql is not None
+
+
+def test_demo_provider_accepts_optional_schema_context() -> None:
+    provider = DemoQueryProvider()
+
+    candidate = provider.generate_query("Show me monthly revenue.", schema_context=get_schema_context())
 
     assert candidate.category == "monthly_revenue"
     assert candidate.sql is not None
@@ -65,13 +75,13 @@ def test_provider_factory_returns_llm_provider_without_api_key() -> None:
 def test_llm_provider_returns_not_configured_candidate() -> None:
     provider = LLMQueryProvider()
 
-    candidate = provider.generate_query("What are the top products?")
+    candidate = provider.generate_query("What are the top products?", schema_context=get_schema_context())
 
     assert candidate.category == "unsupported"
     assert candidate.sql is None
     assert candidate.source == "llm"
     assert candidate.safety_status == "not_generated"
-    assert candidate.reason == "LLM provider is not configured yet. Use QUERY_PROVIDER=demo."
+    assert candidate.reason == "LLM provider is not configured yet. Use QUERY_PROVIDER=demo. Schema context will be used by this provider later."
 
 
 def test_provider_factory_rejects_unknown_provider() -> None:
