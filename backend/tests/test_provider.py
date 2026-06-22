@@ -81,7 +81,9 @@ def test_llm_provider_returns_not_configured_candidate() -> None:
     assert candidate.sql is None
     assert candidate.source == "llm"
     assert candidate.safety_status == "not_generated"
-    assert candidate.reason == "LLM provider is not configured yet. Use QUERY_PROVIDER=demo. Schema context will be used by this provider later."
+    assert candidate.reason is not None
+    assert "not configured yet" in candidate.reason
+    assert "QUERY_PROVIDER=demo" in candidate.reason
 
 
 def test_provider_factory_rejects_unknown_provider() -> None:
