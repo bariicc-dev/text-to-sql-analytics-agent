@@ -1,52 +1,36 @@
 # QueryPilot: Safe Text-to-SQL Analytics Agent
 
-This is a personal Data & AI Engineering project where I am building a safe Text-to-SQL analytics agent step by step.
+QueryPilot is a personal Data & AI Engineering project for building a safe Text-to-SQL analytics backend step by step.
 
-The goal is not only to generate SQL. I also want to validate it, execute it safely, keep query history, collect feedback, and evaluate the system with demo questions.
-
-For now, the project uses synthetic e-commerce data and a simple demo question mapping. There is no external model required yet.
+The project uses synthetic e-commerce data and a demo query provider. It does not require an external model or API key yet.
 
 ## Why I Am Building It
 
-Text-to-SQL can be useful, but it can also be risky if queries are generated and executed without checks. This project focuses on the backend workflow around analytics questions:
+Text-to-SQL is useful, but it can be risky if generated queries run without checks. This project focuses on the backend workflow around analytics questions:
 
-1. understand the user question
-2. inspect the database schema
-3. generate or select a SQL query
-4. validate the SQL before execution
-5. block dangerous SQL
-6. execute only safe read-only queries
-7. return structured results
-8. explain the answer
-9. log the question, SQL, result, and errors
-10. collect feedback
-11. evaluate the agent with test questions
+1. inspect the database schema
+2. generate or select a SQL query
+3. validate the SQL before execution
+4. block dangerous SQL
+5. execute only safe read-only queries
+6. return structured results
+7. log what happened
+8. collect feedback
+9. evaluate the system with demo questions
 
-A Text-to-SQL agent should not be a black box. I want to track what was asked, what SQL was generated, whether it was safe, and whether the answer was useful.
+The goal is to keep the system easy to inspect, test, and explain.
 
 ## What It Does Now
 
-Milestone 9 adds schema context for the demo database:
+The current backend includes:
 
-- FastAPI backend structure
-- `/health` endpoint
-- typed settings file
-- SQLAlchemy database connection foundation
-- SQLAlchemy models for customers, products, orders, order items, refunds, query logs, and feedback
-- deterministic demo seed script
-- analytics endpoints for top products, monthly revenue, refund rate, and customer segments
-- `/validate-sql` endpoint for read-only SQL safety checks
-- `/chat` endpoint with provider-based query generation, validation, execution, simple explanations, and query logging
-- query log endpoints for reviewing recent chat interactions
-- feedback endpoints linked to query logs
-- evaluation cases for normal, unsupported, and unsafe questions
-- evaluation endpoints for listing cases and running the suite
-- schema context endpoints for tables, columns, relationships, and compact provider context
-- demo query provider that runs without external services
-- LLM provider skeleton that does not call any external service yet
-- Docker Compose setup for backend and PostgreSQL
-- tests for health, model registration, route registration, SQL validation, demo chat routing, query logs, feedback, evaluation, providers, and schema context
-- GitHub Actions workflow for backend tests
+- FastAPI routes for health, chat, SQL validation, analytics, query history, feedback, evaluation, and schema context.
+- SQLAlchemy models for the synthetic e-commerce database.
+- A demo query provider that maps known business questions to safe SQL templates.
+- A provider interface and LLM skeleton for future work, with demo mode still the default.
+- SQL validation before query execution.
+- Query history, feedback, and evaluation tests.
+- Docker Compose and GitHub Actions for local running and CI.
 
 ## Architecture
 
@@ -106,8 +90,6 @@ docs/
   database_schema.md
 ```
 
-The project is intentionally kept small. Each milestone should be easy to run, test, and explain.
-
 ## Tech Stack
 
 - Python
@@ -144,7 +126,7 @@ After the containers are running, seed the synthetic e-commerce data:
 docker compose exec backend python -m app.demo.seed_data
 ```
 
-The seed data is small on purpose. It is meant to support analytics endpoint development and manual demos without using private data.
+The seed data is small on purpose. It supports analytics endpoint development and manual demos without using private data.
 
 ## Testing
 
@@ -159,9 +141,9 @@ GitHub Actions also runs the backend test workflow on pull requests.
 
 ## Provider Interface
 
-For now, QueryPilot uses a demo provider that maps known business questions to SQL templates. I kept it this way on purpose so the project can run locally without external services.
+QueryPilot uses the demo provider by default. It maps known business questions to SQL templates so the project can run locally without external services.
 
-The provider interface makes it easier to add a real LLM later, while still keeping SQL validation as a required safety step.
+The provider interface is there for future LLM support. Any generated SQL still needs to pass validation before execution.
 
 The default provider is configured with:
 
@@ -171,25 +153,15 @@ QUERY_PROVIDER=demo
 
 ## Schema Context
 
-Before adding a real LLM provider, I added a schema context layer. It describes the demo database tables, columns, relationships, and business meaning.
+The schema context layer describes the demo database tables, columns, relationships, and business meaning.
 
-This gives future providers the information they need to generate better SQL, while the validation layer still checks every query before execution.
-
-## Future LLM Support
-
-For now, QueryPilot uses the demo provider by default. This keeps the project easy to run locally and avoids depending on external APIs.
-
-The provider structure is prepared so a real LLM provider can be added later, for example NVIDIA-hosted models or another API provider. Even then, generated SQL will still go through the validation layer before execution.
-
-The current LLM provider path is only a skeleton. It does not call an external model and does not require an API key.
+Future providers can use this context to generate better SQL, while the validation layer still checks every query before execution.
 
 ## Evaluation
 
 The project includes a small evaluation suite for the demo agent.
 
-Since this project is about safe Text-to-SQL, I do not want to only test happy paths. The evaluation cases include normal business questions, unsupported questions, and unsafe questions.
-
-The suite checks whether known business questions are mapped to the expected query category, whether unsupported questions are handled cleanly, and whether unsafe questions are blocked.
+The cases include normal business questions, unsupported questions, and unsafe questions. The suite checks whether questions map to the expected category, unsupported questions are handled cleanly, and unsafe questions are blocked.
 
 ## Example Questions
 
@@ -246,41 +218,16 @@ Blocked:
 
 It also blocks multiple statements, SQL comments, suspicious semicolons, and broad `SELECT *` queries without a `LIMIT`.
 
-## Current Status
-
-Safe demo Text-to-SQL backend:
-
-- demo provider as the default query provider
-- schema context for the demo database
-- LLM provider skeleton for future work
-- safe SQL validation
-- analytics endpoints
-- query history
-- feedback
-- evaluation suite
-
 ## Roadmap
 
-### Next Milestone
+Next milestone:
 
-Prompt context builder:
-
-- use schema context to build provider-ready prompt context
-- keep demo provider as the default path
+- build prompt context from the schema context
+- keep the demo provider as the default path
 - keep SQL validation mandatory before execution
 
-### Later
+Later:
 
-Future LLM provider:
-
-- keep demo provider as default
 - add a real provider behind the interface
-- no API key required for the basic demo
-- SQL validation remains mandatory before execution
-
-Small UI or docs demo:
-
-- screenshots
-- example questions
-- simple API walkthrough
-- maybe a lightweight demo page only if the backend is stable
+- keep the basic demo runnable without an API key
+- add a small UI or docs demo if the backend is stable
