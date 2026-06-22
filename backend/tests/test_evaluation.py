@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 
 from app.demo.evaluation_questions import EVALUATION_CASES
 from app.main import app
-from app.services.demo_sql_generation_service import generate_demo_sql
+from app.providers.demo_provider import DemoQueryProvider
 from app.services.evaluation_service import run_evaluation_suite
 
 client = TestClient(app)
@@ -49,10 +49,10 @@ def test_unsafe_questions_are_classified_as_blocked() -> None:
 
 
 def test_normal_demo_question_matches_expected_category() -> None:
-    query = generate_demo_sql("What are the top 5 products by revenue?")
+    candidate = DemoQueryProvider().generate_query("What are the top 5 products by revenue?")
 
-    assert query is not None
-    assert query.category == "top_products"
+    assert candidate.category == "top_products"
+    assert candidate.sql is not None
 
 
 def test_evaluation_suite_passes_current_cases() -> None:

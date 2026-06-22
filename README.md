@@ -68,7 +68,6 @@ backend/
     services/
       analytics_service.py
       chat_service.py
-      demo_sql_generation_service.py
       evaluation_service.py
       explanation_service.py
       feedback_service.py
