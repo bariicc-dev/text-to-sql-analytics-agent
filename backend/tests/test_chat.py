@@ -1,5 +1,5 @@
 from app.main import app
-from app.services.demo_sql_generation_service import FALLBACK_MESSAGE, generate_demo_sql
+from app.providers.demo_provider import DemoQueryProvider, FALLBACK_MESSAGE
 
 
 def test_chat_route_is_registered() -> None:
@@ -8,25 +8,26 @@ def test_chat_route_is_registered() -> None:
     assert "/chat" in paths
 
 
-def test_demo_sql_generation_for_top_products() -> None:
-    query = generate_demo_sql("What are the top 5 products by revenue?")
+def test_demo_provider_returns_top_products_query() -> None:
+    candidate = DemoQueryProvider().generate_query("What are the top 5 products by revenue?")
 
-    assert query is not None
-    assert query.category == "top_products"
-    assert "FROM products" in query.sql
-    assert "LIMIT 5" in query.sql
-
-
-def test_demo_sql_generation_for_monthly_revenue() -> None:
-    query = generate_demo_sql("What is the monthly revenue trend?")
-
-    assert query is not None
-    assert query.category == "monthly_revenue"
-    assert "EXTRACT(MONTH" in query.sql
+    assert candidate.category == "top_products"
+    assert candidate.sql is not None
+    assert "FROM products" in candidate.sql
+    assert "LIMIT 5" in candidate.sql
 
 
-def test_demo_sql_generation_fallback() -> None:
-    query = generate_demo_sql("Which warehouse is slowest?")
+def test_demo_provider_returns_monthly_revenue_query() -> None:
+    candidate = DemoQueryProvider().generate_query("What is the monthly revenue trend?")
 
-    assert query is None
+    assert candidate.category == "monthly_revenue"
+    assert candidate.sql is not None
+    assert "EXTRACT(MONTH" in candidate.sql
+
+
+def test_demo_provider_returns_no_sql_for_unsupported_question() -> None:
+    candidate = DemoQueryProvider().generate_query("Which warehouse is slowest?")
+
+    assert candidate.sql is None
+    assert candidate.safety_status == "not_generated"
     assert "demo mode" in FALLBACK_MESSAGE
