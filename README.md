@@ -27,7 +27,7 @@ The current backend includes:
 - FastAPI routes for health, chat, SQL validation, analytics, query history, feedback, evaluation, schema context, and prompt context.
 - SQLAlchemy models for the synthetic e-commerce database.
 - A demo query provider that maps known business questions to safe SQL templates.
-- A provider interface and LLM skeleton for future work, with demo mode still the default.
+- A provider interface with demo and optional NVIDIA-compatible LLM provider paths.
 - A prompt context builder for future LLM providers.
 - SQL validation before query execution.
 - Query history, feedback, and evaluation tests.
@@ -84,6 +84,7 @@ backend/
     test_database_models.py
     test_evaluation.py
     test_health.py
+    test_llm_provider.py
     test_prompt_context.py
     test_provider.py
     test_query_logs_feedback.py
@@ -165,6 +166,22 @@ Future providers can use this context to generate better SQL, while the validati
 
 Before adding a real LLM provider, I added a small prompt context builder. It prepares the information a provider will need: the question, the database schema, safety rules, and the expected response format. The demo provider still stays the default path.
 
+## NVIDIA Provider
+
+QueryPilot runs with the demo provider by default. I added an optional NVIDIA-compatible provider behind the same interface so I can test real LLM SQL generation later. Even when this provider is used, generated SQL still goes through the validation layer before execution.
+
+Example configuration:
+
+```text
+QUERY_PROVIDER=llm
+LLM_PROVIDER=nvidia
+LLM_MODEL=<model-name>
+LLM_API_BASE_URL=<nvidia-compatible-chat-completions-base-url>
+LLM_API_KEY=<your-api-key>
+```
+
+Keep `QUERY_PROVIDER=demo` for the local demo path that does not require an API key.
+
 ## Evaluation
 
 The project includes a small evaluation suite for the demo agent.
@@ -231,7 +248,7 @@ It also blocks multiple statements, SQL comments, suspicious semicolons, and bro
 
 Next milestone:
 
-- add a real provider behind the existing provider interface
+- add evaluation support for comparing demo and LLM provider behavior
 - keep the demo provider as the default path
 - keep SQL validation mandatory before execution
 
