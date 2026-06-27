@@ -22,6 +22,24 @@ curl -X POST http://localhost:8000/chat \
 
 The response includes an answer, SQL, rows, explanation, safety status, and source. The interaction is also saved in query history.
 
+## Provider Config
+
+Demo mode is the default and does not require an API key:
+
+```text
+QUERY_PROVIDER=demo
+```
+
+Optional NVIDIA-compatible provider config uses placeholders:
+
+```text
+QUERY_PROVIDER=llm
+LLM_PROVIDER=nvidia
+LLM_MODEL=<model-name>
+LLM_API_BASE_URL=<nvidia-compatible-chat-completions-base-url>
+LLM_API_KEY=<your-api-key>
+```
+
 ## Query History
 
 ```bash
