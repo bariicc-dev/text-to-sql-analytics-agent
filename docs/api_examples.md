@@ -88,6 +88,18 @@ Read the compact schema context:
 curl http://localhost:8000/schema/compact
 ```
 
+## Prompt Context
+
+Build prompt context for a future provider:
+
+```bash
+curl -X POST http://localhost:8000/prompt/context \
+  -H "Content-Type: application/json" \
+  -d '{"question":"What are the top 5 products by revenue?"}'
+```
+
+The response includes the original question and the prompt text. No external model is called.
+
 ## Validate SQL
 
 ```bash

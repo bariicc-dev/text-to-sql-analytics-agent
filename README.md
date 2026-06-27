@@ -24,10 +24,11 @@ The goal is to keep the system easy to inspect, test, and explain.
 
 The current backend includes:
 
-- FastAPI routes for health, chat, SQL validation, analytics, query history, feedback, evaluation, and schema context.
+- FastAPI routes for health, chat, SQL validation, analytics, query history, feedback, evaluation, schema context, and prompt context.
 - SQLAlchemy models for the synthetic e-commerce database.
 - A demo query provider that maps known business questions to safe SQL templates.
 - A provider interface and LLM skeleton for future work, with demo mode still the default.
+- A prompt context builder for future LLM providers.
 - SQL validation before query execution.
 - Query history, feedback, and evaluation tests.
 - Docker Compose and GitHub Actions for local running and CI.
@@ -45,6 +46,7 @@ backend/
         evaluation.py
         feedback.py
         health.py
+        prompt.py
         queries.py
         schema_context.py
     core/
@@ -56,6 +58,8 @@ backend/
     models/
       database_models.py
       schemas.py
+    prompting/
+      builder.py
     providers/
       base.py
       demo_provider.py
@@ -80,6 +84,7 @@ backend/
     test_database_models.py
     test_evaluation.py
     test_health.py
+    test_prompt_context.py
     test_provider.py
     test_query_logs_feedback.py
     test_schema_context.py
@@ -156,6 +161,10 @@ The schema context layer describes the demo database tables, columns, relationsh
 
 Future providers can use this context to generate better SQL, while the validation layer still checks every query before execution.
 
+## Prompt Context
+
+Before adding a real LLM provider, I added a small prompt context builder. It prepares the information a provider will need: the question, the database schema, safety rules, and the expected response format. The demo provider still stays the default path.
+
 ## Evaluation
 
 The project includes a small evaluation suite for the demo agent.
@@ -175,6 +184,7 @@ The cases include normal business questions, unsupported questions, and unsafe q
 GET  /health
 POST /chat
 POST /validate-sql
+POST /prompt/context
 GET  /queries/logs
 GET  /queries/logs/{query_log_id}
 POST /feedback
@@ -221,12 +231,11 @@ It also blocks multiple statements, SQL comments, suspicious semicolons, and bro
 
 Next milestone:
 
-- build prompt context from the schema context
+- add a real provider behind the existing provider interface
 - keep the demo provider as the default path
 - keep SQL validation mandatory before execution
 
 Later:
 
-- add a real provider behind the interface
 - keep the basic demo runnable without an API key
 - add a small UI or docs demo if the backend is stable
