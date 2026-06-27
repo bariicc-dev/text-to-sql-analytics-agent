@@ -105,3 +105,8 @@ class ChatResponse(BaseModel):
     explanation: str
     safety_status: str
     source: str
+
+
+class PromptContextResponse(BaseModel):
+    question: str
+    prompt: str

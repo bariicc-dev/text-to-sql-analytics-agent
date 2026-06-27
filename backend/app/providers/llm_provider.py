@@ -1,12 +1,19 @@
 from typing import Any
 
+from app.prompting.builder import build_sql_prompt
 from app.providers.base import QueryCandidate
 
-_NOT_CONFIGURED_MESSAGE = "LLM provider is not configured yet. Use QUERY_PROVIDER=demo. Schema context will be used by this provider later."
+_NOT_CONFIGURED_MESSAGE = (
+    "LLM provider is not configured yet. Use QUERY_PROVIDER=demo. "
+    "Prompt context is ready for future provider calls."
+)
 
 
 class LLMQueryProvider:
     source = "llm"
+
+    def build_prompt_context(self, question: str) -> str:
+        return build_sql_prompt(question)
 
     def generate_query(self, question: str, schema_context: Any | None = None) -> QueryCandidate:
         return QueryCandidate(
