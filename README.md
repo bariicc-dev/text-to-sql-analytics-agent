@@ -1,176 +1,129 @@
 # QueryPilot: Safe Text-to-SQL Analytics Agent
 
-QueryPilot is a personal Data & AI Engineering project for building a safe Text-to-SQL analytics backend step by step.
+QueryPilot is a FastAPI backend that answers analytics questions with SQL while keeping validation between query generation and execution.
 
-The project uses synthetic e-commerce data and a demo query provider. It does not require an external model or API key yet.
+The project runs against synthetic e-commerce data. Its deterministic demo provider is the default, so the complete local flow works without an external model or API key. An optional NVIDIA-compatible provider is available for testing LLM-generated SQL through the same validation path.
 
-## Why I Am Building It
+## Why safe Text-to-SQL matters
 
-Text-to-SQL is useful, but it can be risky if generated queries run without checks. This project focuses on the backend workflow around analytics questions:
+Text-to-SQL makes data easier to explore, but generated SQL should be treated as untrusted input. A useful system needs more than query generation: it needs schema context, validation, controlled execution, logging, feedback, and repeatable evaluation.
 
-1. inspect the database schema
-2. generate or select a SQL query
-3. validate the SQL before execution
-4. block dangerous SQL
-5. execute only safe read-only queries
-6. return structured results
-7. log what happened
-8. collect feedback
-9. evaluate the system with demo questions
+QueryPilot follows this flow:
 
-The goal is to keep the system easy to inspect, test, and explain.
+1. receive an analytics question
+2. select or generate a SQL candidate through a provider
+3. validate the SQL as read-only
+4. block unsafe or unsupported requests
+5. execute approved SQL against PostgreSQL
+6. return structured results and record the interaction
 
-## What It Does Now
+## Current features
 
-The current backend includes:
+- FastAPI endpoints for chat, SQL validation, analytics, query history, feedback, provider evaluation, schema context, and prompt context
+- Synthetic PostgreSQL e-commerce schema and seed data
+- Deterministic demo provider with no API key required
+- Optional NVIDIA-compatible LLM provider behind the same provider interface
+- Read-only SQL validation before execution
+- Query logging and user feedback storage
+- Evaluation cases for supported, unsupported, and unsafe questions
+- Provider comparison with per-provider results and summaries
+- Docker Compose for local services and GitHub Actions for backend tests
 
-- FastAPI routes for health, chat, SQL validation, analytics, query history, feedback, evaluation, schema context, and prompt context.
-- SQLAlchemy models for the synthetic e-commerce database.
-- A demo query provider that maps known business questions to safe SQL templates.
-- A provider interface with demo and optional NVIDIA-compatible LLM provider paths.
-- A prompt context builder for future LLM providers.
-- SQL validation before query execution.
-- Query history, feedback, and evaluation tests.
-- Docker Compose and GitHub Actions for local running and CI.
+## Try it locally
 
-## Architecture
+Requirements: Docker, Docker Compose, and `curl`.
 
-```text
-backend/
-  app/
-    main.py
-    api/
-      routes/
-        analytics.py
-        chat.py
-        evaluation.py
-        feedback.py
-        health.py
-        prompt.py
-        queries.py
-        schema_context.py
-    core/
-      config.py
-      database.py
-    demo/
-      evaluation_questions.py
-      seed_data.py
-    models/
-      database_models.py
-      schemas.py
-    prompting/
-      builder.py
-    providers/
-      base.py
-      demo_provider.py
-      factory.py
-      llm_provider.py
-    schema_context/
-      catalog.py
-      models.py
-      service.py
-    services/
-      analytics_service.py
-      chat_service.py
-      evaluation_service.py
-      explanation_service.py
-      feedback_service.py
-      logging_service.py
-      query_execution_service.py
-      sql_validation_service.py
-  tests/
-    test_analytics_routes.py
-    test_chat.py
-    test_database_models.py
-    test_evaluation.py
-    test_health.py
-    test_llm_provider.py
-    test_prompt_context.py
-    test_provider.py
-    test_query_logs_feedback.py
-    test_schema_context.py
-    test_sql_validation.py
-docs/
-  api_examples.md
-  database_schema.md
-```
-
-## Tech Stack
-
-- Python
-- FastAPI
-- PostgreSQL
-- SQLAlchemy
-- Pydantic
-- Docker Compose
-- pytest
-
-## How To Run
+1. Start PostgreSQL and the backend:
 
 ```bash
-docker compose up --build
+docker compose up --build -d
 ```
 
-Then check the health endpoint:
-
-```bash
-curl http://localhost:8000/health
-```
-
-Expected response:
-
-```json
-{"status":"ok"}
-```
-
-## Seed The Demo Database
-
-After the containers are running, seed the synthetic e-commerce data:
+2. Seed the synthetic data:
 
 ```bash
 docker compose exec backend python -m app.demo.seed_data
 ```
 
-The seed data is small on purpose. It supports analytics endpoint development and manual demos without using private data.
+3. Ask a demo question:
 
-## Testing
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"question":"What are the top 5 products by revenue?"}'
+```
 
-Run backend tests locally from the repository root:
+4. Run the evaluation suite with the default demo provider:
+
+```bash
+curl -X POST http://localhost:8000/evaluation/run
+```
+
+5. Compare the demo and LLM providers:
+
+```bash
+curl -X POST http://localhost:8000/evaluation/compare
+```
+
+If the LLM provider is not configured, the comparison reports `not_configured` for that provider instead of failing. More request examples are in [docs/api_examples.md](docs/api_examples.md).
+
+To stop the services:
+
+```bash
+docker compose down
+```
+
+## Run the tests
+
+From the repository root, install the backend requirements in your Python environment and run pytest:
 
 ```bash
 cd backend
+python -m pip install -r requirements.txt
 python -m pytest
 ```
 
-GitHub Actions also runs the backend test workflow on pull requests.
+GitHub Actions runs the backend test suite on pull requests.
 
-## Provider Interface
+## Architecture
 
-QueryPilot uses the demo provider by default. It maps known business questions to SQL templates so the project can run locally without external services.
+The API routes stay thin. Providers produce query candidates, services handle validation and execution, and Pydantic models define the API contracts.
 
-The provider interface is there for future LLM support. Any generated SQL still needs to pass validation before execution.
+The backend uses Python 3.12, FastAPI, SQLAlchemy, Pydantic, PostgreSQL, and pytest.
 
-The default provider is configured with:
+```text
+backend/
+  app/
+    api/routes/          FastAPI endpoints
+    core/                configuration and database setup
+    demo/                seed data and evaluation cases
+    models/              API and database models
+    prompting/           prompt context builder
+    providers/           demo and LLM provider implementations
+    schema_context/      schema metadata and compact context
+    services/            validation, execution, logging, and evaluation
+    main.py              application setup
+  tests/                 backend test suite
+docs/
+  api_examples.md
+  database_schema.md
+```
+
+## Provider design
+
+### Demo provider
+
+The demo provider is the default path:
 
 ```text
 QUERY_PROVIDER=demo
 ```
 
-## Schema Context
+It maps supported business questions to known SQL templates. This keeps the project deterministic and runnable without external services.
 
-The schema context layer describes the demo database tables, columns, relationships, and business meaning.
+### Optional NVIDIA-compatible provider
 
-Future providers can use this context to generate better SQL, while the validation layer still checks every query before execution.
-
-## Prompt Context
-
-Before adding a real LLM provider, I added a small prompt context builder. It prepares the information a provider will need: the question, the database schema, safety rules, and the expected response format. The demo provider still stays the default path.
-
-## NVIDIA Provider
-
-QueryPilot runs with the demo provider by default. I added an optional NVIDIA-compatible provider behind the same interface so I can test real LLM SQL generation later. Even when this provider is used, generated SQL still goes through the validation layer before execution.
-
-Example configuration:
+The LLM provider uses an NVIDIA-compatible chat-completions endpoint when all required settings are present:
 
 ```text
 QUERY_PROVIDER=llm
@@ -180,22 +133,30 @@ LLM_API_BASE_URL=<nvidia-compatible-chat-completions-base-url>
 LLM_API_KEY=<your-api-key>
 ```
 
-Keep `QUERY_PROVIDER=demo` for the local demo path that does not require an API key.
+The provider prepares a prompt, parses the response into a SQL candidate, and returns safe failure results for missing configuration or invalid responses. Generated SQL never bypasses the existing validation layer.
+
+### Schema context and prompt context
+
+Schema context describes the demo tables, columns, relationships, and business meaning. Prompt context combines the question, compact schema context, safety rules, and expected response format for the LLM provider.
+
+Both contexts can also be inspected through the API, which makes provider inputs easier to debug and test.
 
 ## Provider evaluation
 
-The same evaluation cases can run against the demo or optional LLM provider. The results show whether the provider returned a candidate, whether its response was parseable, whether SQL was generated and passed validation, and whether the category and safety status matched the expected values.
+The evaluation suite uses the same cases across providers. Each result records the expected and actual category, expected and actual safety status, provider, parseability, SQL generation, SQL validation, pass status, and reason.
 
-The demo provider remains the default and needs no API key. If the LLM provider is not configured, evaluation returns a clean `not_configured` result instead of calling an external API or crashing. `POST /evaluation/compare` runs the same cases for both providers and groups their results and summaries by provider.
+- `POST /evaluation/run` uses the demo provider by default and accepts an optional provider selection.
+- `POST /evaluation/compare` runs the same cases for the demo and LLM providers and groups results and summaries by provider.
 
-## Example Questions
+The suite includes normal analytics questions, unsupported topics, and unsafe requests. Tests use mocks for LLM responses and do not call real external APIs.
 
-- What are the top 5 products by revenue?
-- What is the monthly revenue trend?
-- Which customer segment generates the most revenue?
-- What is the refund rate by product category?
+## SQL safety rules
 
-## Current API
+The validator allows read-only queries beginning with `SELECT` or `WITH`. It blocks write and administrative statements such as `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `TRUNCATE`, and `CREATE`.
+
+It also rejects multiple statements, SQL comments, suspicious semicolons, and unrestricted `SELECT *` queries without a `LIMIT`.
+
+## API overview
 
 ```text
 GET  /health
@@ -218,42 +179,17 @@ GET  /analytics/refund-rate
 GET  /analytics/customer-segments
 ```
 
-## SQL Safety Rules
+## Current limitations
 
-The SQL safety layer allows only read-only analytics queries.
+- The demo provider is deterministic and supports a limited set of known analytics questions.
+- The NVIDIA-compatible provider requires user configuration and a compatible external model endpoint.
+- Real LLM behavior should be checked manually with user-provided credentials; automated tests use mocks only.
+- Every generated SQL candidate is validated before execution, but the current validator focuses on application-level read-only rules.
+- The project currently uses synthetic e-commerce data and a single PostgreSQL schema.
 
-Allowed:
+## Possible improvements
 
-- `SELECT`
-- `WITH`
-
-Blocked:
-
-- `DROP`
-- `DELETE`
-- `UPDATE`
-- `INSERT`
-- `ALTER`
-- `TRUNCATE`
-- `CREATE`
-- `GRANT`
-- `REVOKE`
-- `COPY`
-- `EXEC`
-- `MERGE`
-- `CALL`
-
-It also blocks multiple statements, SQL comments, suspicious semicolons, and broad `SELECT *` queries without a `LIMIT`.
-
-## Roadmap
-
-Next milestone:
-
-- polish the demo flow and project documentation
-- keep the demo provider as the default path
-- keep SQL validation mandatory before execution
-
-Later:
-
-- keep the basic demo runnable without an API key
-- add a small UI or docs demo if the backend is stable
+- expand evaluation cases and supported analytics questions
+- add database-level read-only credentials, query timeouts, and row limits
+- measure configured LLM accuracy, latency, and failure modes in a controlled environment
+- extend schema coverage and support additional SQL dialects
