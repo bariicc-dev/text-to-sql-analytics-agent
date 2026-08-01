@@ -182,11 +182,11 @@ LLM_API_KEY=<your-api-key>
 
 Keep `QUERY_PROVIDER=demo` for the local demo path that does not require an API key.
 
-## Evaluation
+## Provider evaluation
 
-The project includes a small evaluation suite for the demo agent.
+The same evaluation cases can run against the demo or optional LLM provider. The results show whether the provider returned a candidate, whether its response was parseable, whether SQL was generated and passed validation, and whether the category and safety status matched the expected values.
 
-The cases include normal business questions, unsupported questions, and unsafe questions. The suite checks whether questions map to the expected category, unsupported questions are handled cleanly, and unsafe questions are blocked.
+The demo provider remains the default and needs no API key. If the LLM provider is not configured, evaluation returns a clean `not_configured` result instead of calling an external API or crashing. `POST /evaluation/compare` runs the same cases for both providers and groups their results and summaries by provider.
 
 ## Example Questions
 
@@ -208,6 +208,7 @@ POST /feedback
 GET  /feedback/query/{query_log_id}
 GET  /evaluation/cases
 POST /evaluation/run
+POST /evaluation/compare
 GET  /schema
 GET  /schema/tables/{table_name}
 GET  /schema/compact
@@ -248,7 +249,7 @@ It also blocks multiple statements, SQL comments, suspicious semicolons, and bro
 
 Next milestone:
 
-- add evaluation support for comparing demo and LLM provider behavior
+- polish the demo flow and project documentation
 - keep the demo provider as the default path
 - keep SQL validation mandatory before execution
 

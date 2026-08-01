@@ -80,11 +80,27 @@ List evaluation cases:
 curl http://localhost:8000/evaluation/cases
 ```
 
-Run the evaluation suite:
+Run the evaluation suite with the default demo provider:
 
 ```bash
 curl -X POST http://localhost:8000/evaluation/run
 ```
+
+Select the demo provider explicitly:
+
+```bash
+curl -X POST http://localhost:8000/evaluation/run \
+  -H "Content-Type: application/json" \
+  -d '{"provider":"demo"}'
+```
+
+Compare the demo and LLM providers using the same cases:
+
+```bash
+curl -X POST http://localhost:8000/evaluation/compare
+```
+
+The comparison returns results and a summary for each provider. If the LLM provider is not configured, its summary reports `not_configured` without making an external API call.
 
 ## Schema Context
 
