@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -64,23 +64,55 @@ class EvaluationCaseRead(BaseModel):
     notes: str
 
 
+class EvaluationRunRequest(BaseModel):
+    provider: Literal["demo", "llm"] = "demo"
+
+
+class EvaluationComparisonRequest(BaseModel):
+    providers: list[Literal["demo", "llm"]] = Field(
+        default_factory=lambda: ["demo", "llm"],
+        min_length=1,
+    )
+
+
 class EvaluationResult(BaseModel):
-    id: int
+    case_id: int
     question: str
     expected_category: str
     actual_category: str
     expected_safety_status: str
     actual_safety_status: str
+    provider: str
+    candidate_returned: bool
+    response_parseable: bool
+    sql_generated: bool
+    sql_validated: bool
     passed: bool
     reason: str
 
 
 class EvaluationRunSummary(BaseModel):
+    provider: str
+    status: str
     total_cases: int
     passed: int
     failed: int
     pass_rate: float
     results: list[EvaluationResult]
+
+
+class ProviderEvaluationSummary(BaseModel):
+    passed: int
+    failed: int
+    pass_rate: float
+    status: str
+
+
+class EvaluationComparisonResponse(BaseModel):
+    providers: list[str]
+    total_cases: int
+    results_by_provider: dict[str, list[EvaluationResult]]
+    summary_by_provider: dict[str, ProviderEvaluationSummary]
 
 
 class SqlValidationRequest(BaseModel):

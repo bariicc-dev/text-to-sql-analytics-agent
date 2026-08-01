@@ -70,6 +70,7 @@ _UNSAFE_QUESTION_TERMS = ("delete", "update", "drop", "truncate", "insert", "alt
 
 class DemoQueryProvider:
     source = "demo"
+    status = "ready"
 
     def generate_query(self, question: str, schema_context: Any | None = None) -> QueryCandidate:
         normalized_question = question.lower().strip()

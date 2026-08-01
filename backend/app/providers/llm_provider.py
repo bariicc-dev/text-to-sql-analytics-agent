@@ -25,6 +25,11 @@ class LLMQueryProvider:
     def build_prompt_context(self, question: str) -> str:
         return build_sql_prompt(question)
 
+    @property
+    def status(self) -> str:
+        provider_name = (self.settings.llm_provider or "").lower().strip()
+        return "ready" if provider_name == "nvidia" and not self._missing_config() else "not_configured"
+
     def build_request_payload(self, question: str) -> dict[str, Any]:
         return {
             "model": self.settings.llm_model,
@@ -110,7 +115,7 @@ class LLMQueryProvider:
 
         sql = parsed_response.get("sql")
         if not isinstance(sql, str) or not sql.strip():
-            return self._not_generated("LLM response did not include SQL.")
+            return self._not_generated("LLM response did not include SQL.", response_parseable=True)
 
         category = parsed_response.get("category")
         reason = parsed_response.get("reason")
@@ -124,7 +129,7 @@ class LLMQueryProvider:
             safety_status="not_checked",
         )
 
-    def _not_generated(self, reason: str) -> QueryCandidate:
+    def _not_generated(self, reason: str, response_parseable: bool = False) -> QueryCandidate:
         return QueryCandidate(
             category="unsupported",
             sql=None,
@@ -132,4 +137,5 @@ class LLMQueryProvider:
             confidence=0.0,
             reason=reason,
             safety_status="not_generated",
+            response_parseable=response_parseable,
         )

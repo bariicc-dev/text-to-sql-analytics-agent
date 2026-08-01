@@ -97,6 +97,7 @@ def test_chat_creates_query_log_for_matched_question(
 
     assert response.status_code == 200
     assert response.json()["safety_status"] == "safe"
+    assert response.json()["source"] == "demo"
     with session_factory() as db:
         logs = db.query(QueryLog).all()
         assert len(logs) == 1

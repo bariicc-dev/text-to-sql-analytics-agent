@@ -10,6 +10,7 @@ class QueryCandidate:
     confidence: float = 0.0
     reason: str | None = None
     safety_status: str = "not_checked"
+    response_parseable: bool = True
 
 
 class QueryProvider(Protocol):

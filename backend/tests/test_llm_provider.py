@@ -41,6 +41,7 @@ def test_llm_provider_returns_not_configured_result_when_config_missing() -> Non
     assert candidate.category == "unsupported"
     assert candidate.sql is None
     assert candidate.safety_status == "not_generated"
+    assert candidate.response_parseable is False
     assert candidate.reason is not None
     assert "Missing" in candidate.reason
 
@@ -95,6 +96,7 @@ def test_nvidia_provider_parses_valid_json_response_into_candidate() -> None:
     assert candidate.sql == "SELECT id, name FROM products LIMIT 5"
     assert candidate.reason == "Product ranking question."
     assert candidate.safety_status == "not_checked"
+    assert candidate.response_parseable is True
 
 
 def test_nvidia_provider_handles_invalid_json_response_safely() -> None:
@@ -112,6 +114,7 @@ def test_nvidia_provider_handles_invalid_json_response_safely() -> None:
     assert candidate.category == "unsupported"
     assert candidate.sql is None
     assert candidate.safety_status == "not_generated"
+    assert candidate.response_parseable is False
     assert candidate.reason == "LLM response was not valid JSON."
 
 
