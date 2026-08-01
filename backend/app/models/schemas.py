@@ -68,6 +68,13 @@ class EvaluationRunRequest(BaseModel):
     provider: Literal["demo", "llm"] = "demo"
 
 
+class EvaluationComparisonRequest(BaseModel):
+    providers: list[Literal["demo", "llm"]] = Field(
+        default_factory=lambda: ["demo", "llm"],
+        min_length=1,
+    )
+
+
 class EvaluationResult(BaseModel):
     case_id: int
     question: str
@@ -92,6 +99,20 @@ class EvaluationRunSummary(BaseModel):
     failed: int
     pass_rate: float
     results: list[EvaluationResult]
+
+
+class ProviderEvaluationSummary(BaseModel):
+    passed: int
+    failed: int
+    pass_rate: float
+    status: str
+
+
+class EvaluationComparisonResponse(BaseModel):
+    providers: list[str]
+    total_cases: int
+    results_by_provider: dict[str, list[EvaluationResult]]
+    summary_by_provider: dict[str, ProviderEvaluationSummary]
 
 
 class SqlValidationRequest(BaseModel):

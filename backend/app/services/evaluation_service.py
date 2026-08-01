@@ -1,10 +1,18 @@
 from dataclasses import asdict
 
 from app.demo.evaluation_questions import EVALUATION_CASES, EvaluationCase
-from app.models.schemas import EvaluationCaseRead, EvaluationResult, EvaluationRunSummary
+from app.models.schemas import (
+    EvaluationCaseRead,
+    EvaluationComparisonResponse,
+    EvaluationResult,
+    EvaluationRunSummary,
+    ProviderEvaluationSummary,
+)
 from app.providers.base import QueryProvider
 from app.providers.factory import get_query_provider
 from app.services.sql_validation_service import validate_sql
+
+DEFAULT_COMPARISON_PROVIDERS = ("demo", "llm")
 
 
 def list_evaluation_cases() -> list[EvaluationCaseRead]:
@@ -40,6 +48,28 @@ def run_evaluation_suite(
         failed=failed_count,
         pass_rate=pass_rate,
         results=results,
+    )
+
+
+def compare_provider_evaluations(
+    provider_names: list[str] | None = None,
+) -> EvaluationComparisonResponse:
+    selected_providers = list(dict.fromkeys(provider_names or DEFAULT_COMPARISON_PROVIDERS))
+    runs = {name: run_evaluation_suite(provider_name=name) for name in selected_providers}
+
+    return EvaluationComparisonResponse(
+        providers=selected_providers,
+        total_cases=len(EVALUATION_CASES),
+        results_by_provider={name: run.results for name, run in runs.items()},
+        summary_by_provider={
+            name: ProviderEvaluationSummary(
+                passed=run.passed,
+                failed=run.failed,
+                pass_rate=round(run.pass_rate * 100, 2),
+                status=run.status,
+            )
+            for name, run in runs.items()
+        },
     )
 
 
