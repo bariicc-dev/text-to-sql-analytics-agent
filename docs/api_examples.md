@@ -1,18 +1,10 @@
 # API Examples
 
-These examples assume the backend is running locally on port 8000.
-
-## Health
-
-```bash
-curl http://localhost:8000/health
-```
-
-```json
-{"status":"ok"}
-```
+These examples assume the backend is running locally on port `8000` and the synthetic data has been seeded.
 
 ## Chat
+
+Ask a question through the default demo provider:
 
 ```bash
 curl -X POST http://localhost:8000/chat \
@@ -20,9 +12,71 @@ curl -X POST http://localhost:8000/chat \
   -d '{"question":"What are the top 5 products by revenue?"}'
 ```
 
-The response includes an answer, SQL, rows, explanation, safety status, and source. The interaction is also saved in query history.
+The response includes the answer, SQL, rows, explanation, safety status, and provider source. The interaction is saved in query history.
 
-## Provider Config
+## Validate SQL
+
+Check a SQL candidate without executing it:
+
+```bash
+curl -X POST http://localhost:8000/validate-sql \
+  -H "Content-Type: application/json" \
+  -d '{"sql":"SELECT id, name FROM products LIMIT 5"}'
+```
+
+## Query logs and feedback
+
+Read recent query logs:
+
+```bash
+curl "http://localhost:8000/queries/logs?limit=20"
+```
+
+Use a returned query log ID when creating feedback:
+
+```bash
+curl -X POST http://localhost:8000/feedback \
+  -H "Content-Type: application/json" \
+  -d '{"query_log_id":1,"rating":5,"comment":"Useful answer"}'
+```
+
+## Schema context
+
+Read the compact schema context used for provider prompts:
+
+```bash
+curl http://localhost:8000/schema/compact
+```
+
+## Prompt context
+
+Inspect the prompt context for a question:
+
+```bash
+curl -X POST http://localhost:8000/prompt/context \
+  -H "Content-Type: application/json" \
+  -d '{"question":"What are the top 5 products by revenue?"}'
+```
+
+This endpoint returns the prepared context without calling an external model.
+
+## Provider evaluation
+
+Run all cases with the default demo provider:
+
+```bash
+curl -X POST http://localhost:8000/evaluation/run
+```
+
+Compare the demo and LLM providers with the same cases:
+
+```bash
+curl -X POST http://localhost:8000/evaluation/compare
+```
+
+If the LLM provider is not configured, its summary reports `not_configured` without calling an external API.
+
+## Optional provider configuration
 
 Demo mode is the default and does not require an API key:
 
@@ -30,7 +84,7 @@ Demo mode is the default and does not require an API key:
 QUERY_PROVIDER=demo
 ```
 
-Optional NVIDIA-compatible provider config uses placeholders:
+The optional NVIDIA-compatible provider uses placeholders for user-supplied settings:
 
 ```text
 QUERY_PROVIDER=llm
@@ -39,146 +93,3 @@ LLM_MODEL=<model-name>
 LLM_API_BASE_URL=<nvidia-compatible-chat-completions-base-url>
 LLM_API_KEY=<your-api-key>
 ```
-
-## Query History
-
-```bash
-curl "http://localhost:8000/queries/logs?limit=20"
-```
-
-Filter by safety status:
-
-```bash
-curl "http://localhost:8000/queries/logs?safety_status=safe"
-```
-
-Read one query log:
-
-```bash
-curl http://localhost:8000/queries/logs/1
-```
-
-## Feedback
-
-```bash
-curl -X POST http://localhost:8000/feedback \
-  -H "Content-Type: application/json" \
-  -d '{"query_log_id":1,"rating":5,"comment":"Useful answer"}'
-```
-
-List feedback for a query log:
-
-```bash
-curl http://localhost:8000/feedback/query/1
-```
-
-## Evaluation
-
-List evaluation cases:
-
-```bash
-curl http://localhost:8000/evaluation/cases
-```
-
-Run the evaluation suite with the default demo provider:
-
-```bash
-curl -X POST http://localhost:8000/evaluation/run
-```
-
-Select the demo provider explicitly:
-
-```bash
-curl -X POST http://localhost:8000/evaluation/run \
-  -H "Content-Type: application/json" \
-  -d '{"provider":"demo"}'
-```
-
-Compare the demo and LLM providers using the same cases:
-
-```bash
-curl -X POST http://localhost:8000/evaluation/compare
-```
-
-The comparison returns results and a summary for each provider. If the LLM provider is not configured, its summary reports `not_configured` without making an external API call.
-
-## Schema Context
-
-Read the full schema context:
-
-```bash
-curl http://localhost:8000/schema
-```
-
-Read one table context:
-
-```bash
-curl http://localhost:8000/schema/tables/products
-```
-
-Read the compact schema context:
-
-```bash
-curl http://localhost:8000/schema/compact
-```
-
-## Prompt Context
-
-Build prompt context for a future provider:
-
-```bash
-curl -X POST http://localhost:8000/prompt/context \
-  -H "Content-Type: application/json" \
-  -d '{"question":"What are the top 5 products by revenue?"}'
-```
-
-The response includes the original question and the prompt text. No external model is called.
-
-## Validate SQL
-
-```bash
-curl -X POST http://localhost:8000/validate-sql \
-  -H "Content-Type: application/json" \
-  -d '{"sql":"SELECT id, name FROM products LIMIT 5"}'
-```
-
-```json
-{
-  "is_safe": true,
-  "reason": "Query is read-only and passed the current safety checks.",
-  "normalized_sql": "SELECT id, name FROM products LIMIT 5",
-  "blocked_keywords": []
-}
-```
-
-## Top Products
-
-```bash
-curl "http://localhost:8000/analytics/top-products?limit=5"
-```
-
-Returns products sorted by revenue.
-
-## Monthly Revenue
-
-```bash
-curl http://localhost:8000/analytics/monthly-revenue
-```
-
-Returns revenue grouped by year and month.
-
-## Refund Rate
-
-```bash
-curl http://localhost:8000/analytics/refund-rate
-```
-
-Returns total orders, refunded orders, refund rate, and refund amount.
-
-## Customer Segments
-
-```bash
-curl http://localhost:8000/analytics/customer-segments
-```
-
-Returns customer segment revenue and order counts.
