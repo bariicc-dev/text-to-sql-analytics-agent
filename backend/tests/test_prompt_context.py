@@ -22,6 +22,14 @@ def test_prompt_context_includes_compact_schema_tables() -> None:
     assert "order_items.product_id -> products.id" in prompt
 
 
+def test_prompt_context_excludes_application_tables() -> None:
+    prompt = build_sql_prompt("Show monthly revenue.")
+
+    assert "query_logs(" not in prompt
+    assert "feedback(" not in prompt
+    assert "feedback." not in prompt
+
+
 def test_prompt_context_includes_safety_rules() -> None:
     prompt = build_sql_prompt("Show monthly revenue.")
 

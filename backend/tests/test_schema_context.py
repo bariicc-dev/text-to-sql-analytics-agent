@@ -48,6 +48,8 @@ def test_compact_schema_context_contains_tables_and_relationships() -> None:
     assert "products(" in context
     assert "orders.customer_id -> customers.id" in context
     assert "order_items.product_id -> products.id" in context
+    assert "query_logs(" not in context
+    assert "feedback(" not in context
 
 
 def test_get_table_context_returns_none_for_missing_table() -> None:

@@ -14,6 +14,8 @@ QueryPilot uses a small synthetic e-commerce database. The data is fake and desi
 | `query_logs` | Query history for questions, SQL, safety status, and errors. |
 | `feedback` | Feedback linked to query logs and optionally customers. |
 
+Generated SQL can read only the five analytics tables: `customers`, `products`, `orders`, `order_items`, and `refunds`. The `query_logs` and `feedback` tables use the application connection and are not granted to the generated-query reader.
+
 ## Relationships
 
 - `orders.customer_id` references `customers.id`
@@ -39,3 +41,5 @@ Run it with:
 ```bash
 docker compose exec backend python -m app.demo.seed_data
 ```
+
+The seed command also reapplies the generated-query reader grants after creating the ORM tables.

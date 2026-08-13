@@ -5,6 +5,11 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.models.database_models import Feedback, QueryLog
 from app.models.schemas import MAX_QUESTION_LENGTH
 from app.providers.base import QueryCandidate
+from app.services.query_execution_service import (
+    GeneratedQueryExecutionError,
+    GeneratedQueryResultLimitError,
+    GeneratedQueryTimeoutError,
+)
 
 
 def create_log(session_factory: sessionmaker[Session], safety_status: str = "safe") -> QueryLog:
@@ -90,13 +95,11 @@ def test_chat_rejects_question_over_length_limit(
     assert response.status_code == 422
 
 
-def test_chat_rolls_back_and_logs_execution_error(
+def test_chat_logs_execution_error_from_reader_session(
     test_client: tuple[TestClient, sessionmaker[Session]],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     client, session_factory = test_client
-    rollback_calls: list[Session] = []
-    original_rollback = Session.rollback
 
     class InvalidSqlProvider:
         def generate_query(self, question: str) -> QueryCandidate:
@@ -106,12 +109,11 @@ def test_chat_rolls_back_and_logs_execution_error(
                 source="test",
             )
 
-    def track_rollback(db: Session) -> None:
-        rollback_calls.append(db)
-        original_rollback(db)
+    def fail_execution(sql: str) -> list[dict[str, object]]:
+        raise GeneratedQueryExecutionError("database details must stay private")
 
     monkeypatch.setattr("app.services.chat_service.get_query_provider", InvalidSqlProvider)
-    monkeypatch.setattr(Session, "rollback", track_rollback)
+    monkeypatch.setattr("app.services.chat_service.execute_read_query", fail_execution)
 
     response = client.post("/chat", json={"question": "Run the failing query."})
 
@@ -119,13 +121,91 @@ def test_chat_rolls_back_and_logs_execution_error(
     data = response.json()
     assert data["answer"] == "The query could not be executed safely."
     assert data["safety_status"] == "error"
-    assert "no such column" not in str(data).lower()
-    assert len(rollback_calls) == 1
+    assert "database details" not in str(data).lower()
 
     with session_factory() as db:
         log = db.query(QueryLog).one()
         assert log.safety_status == "error"
         assert log.error_message == "The query could not be executed safely."
+
+
+@pytest.mark.parametrize(
+    ("error", "expected_status", "expected_message"),
+    [
+        (
+            GeneratedQueryTimeoutError(),
+            "timeout",
+            "The query took too long to complete.",
+        ),
+        (
+            GeneratedQueryResultLimitError(),
+            "result_limit",
+            "The query returned too many rows.",
+        ),
+    ],
+)
+def test_chat_logs_reader_limits_without_exposing_database_errors(
+    error: Exception,
+    expected_status: str,
+    expected_message: str,
+    test_client: tuple[TestClient, sessionmaker[Session]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, session_factory = test_client
+
+    class QueryProvider:
+        def generate_query(self, question: str) -> QueryCandidate:
+            return QueryCandidate(
+                category="test_query",
+                sql="SELECT id FROM products LIMIT 5",
+                source="test",
+            )
+
+    def fail_execution(sql: str) -> list[dict[str, object]]:
+        raise error
+
+    monkeypatch.setattr("app.services.chat_service.get_query_provider", QueryProvider)
+    monkeypatch.setattr("app.services.chat_service.execute_read_query", fail_execution)
+
+    response = client.post("/chat", json={"question": "Run a limited query."})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["safety_status"] == expected_status
+    assert data["answer"] == expected_message
+    with session_factory() as db:
+        log = db.query(QueryLog).one()
+        assert log.safety_status == expected_status
+        assert log.error_message == expected_message
+
+
+def test_blocked_query_is_not_sent_to_the_executor(
+    test_client: tuple[TestClient, sessionmaker[Session]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, session_factory = test_client
+
+    class InternalTableProvider:
+        def generate_query(self, question: str) -> QueryCandidate:
+            return QueryCandidate(
+                category="internal_data",
+                sql="SELECT id FROM query_logs LIMIT 5",
+                source="test",
+            )
+
+    def unexpected_execution(sql: str) -> list[dict[str, object]]:
+        raise AssertionError("blocked SQL reached the executor")
+
+    monkeypatch.setattr("app.services.chat_service.get_query_provider", InternalTableProvider)
+    monkeypatch.setattr("app.services.chat_service.execute_read_query", unexpected_execution)
+
+    response = client.post("/chat", json={"question": "Show internal history."})
+
+    assert response.status_code == 200
+    assert response.json()["safety_status"] == "blocked"
+    with session_factory() as db:
+        log = db.query(QueryLog).one()
+        assert log.safety_status == "blocked"
 
 
 def test_read_query_logs_returns_logs(test_client: tuple[TestClient, sessionmaker[Session]]) -> None:
