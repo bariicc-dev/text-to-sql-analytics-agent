@@ -14,7 +14,9 @@ from app.models.database_models import Customer, Order, OrderItem, Product, Refu
 
 
 @pytest.fixture()
-def test_client() -> Generator[tuple[TestClient, sessionmaker[Session]], None, None]:
+def test_client(
+    monkeypatch: pytest.MonkeyPatch,
+) -> Generator[tuple[TestClient, sessionmaker[Session]], None, None]:
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -28,6 +30,10 @@ def test_client() -> Generator[tuple[TestClient, sessionmaker[Session]], None, N
             yield db
 
     app.dependency_overrides[get_db] = override_get_db
+    monkeypatch.setattr(
+        "app.services.query_execution_service.GeneratedQuerySessionLocal",
+        testing_session_local,
+    )
     try:
         yield TestClient(app), testing_session_local
     finally:

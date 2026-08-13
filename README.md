@@ -23,7 +23,7 @@ QueryPilot follows this flow:
 - Synthetic PostgreSQL e-commerce schema and seed data
 - Deterministic demo provider with no API key required
 - Optional NVIDIA-compatible LLM provider behind the same provider interface
-- Read-only SQL validation before execution
+- Read-only SQL validation and restricted database execution
 - Query logging and user feedback storage
 - Evaluation cases for supported, unsupported, and unsafe questions
 - Provider comparison with per-provider results and summaries
@@ -38,6 +38,8 @@ Requirements: Docker, Docker Compose, and `curl`.
 ```bash
 docker compose up --build -d
 ```
+
+PostgreSQL creates the application and reader roles only when it initializes a new data directory. If an older disposable local volume already exists, run `docker compose down -v` before starting again. Do not remove a volume that contains data you need.
 
 2. Seed the synthetic data:
 
@@ -152,9 +154,11 @@ The suite includes normal analytics questions, unsupported topics, and unsafe re
 
 ## SQL safety rules
 
-The validator allows read-only queries beginning with `SELECT` or `WITH`. It blocks write and administrative statements such as `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `TRUNCATE`, and `CREATE`.
+Generated SQL is treated as untrusted input. The validator allows read-only queries beginning with `SELECT` or `WITH` and blocks write statements, locking clauses, internal application tables, system schemas, and administrative functions.
 
-It also rejects multiple statements, SQL comments, suspicious semicolons, and unrestricted `SELECT *` queries without a `LIMIT`.
+Database permissions provide a second boundary. Application writes use `querypilot_app`, while generated SQL uses `querypilot_reader`. Of QueryPilot's application tables, the reader can select only from `customers`, `products`, `orders`, `order_items`, and `refunds`; it cannot read query history or feedback and cannot modify data. Reader transactions also use a fixed `public` search path, a statement timeout, and a result row cap.
+
+The ORM models remain the source of table definitions. The seed command creates missing tables with the application identity, loads demo data, and applies the reader grants after the tables exist.
 
 ## API overview
 
@@ -184,12 +188,12 @@ GET  /analytics/customer-segments
 - The demo provider is deterministic and supports a limited set of known analytics questions.
 - The NVIDIA-compatible provider requires user configuration and a compatible external model endpoint.
 - Real LLM behavior should be checked manually with user-provided credentials; automated tests use mocks only.
-- Every generated SQL candidate is validated before execution, but the current validator focuses on application-level read-only rules.
+- The validator is a conservative application check, not a complete SQL parser.
+- PostgreSQL exposes some built-in catalog metadata through default privileges. The generated-query path rejects explicit `pg_catalog` and `information_schema` references, but it is not a general SQL sandbox.
 - The project currently uses synthetic e-commerce data and a single PostgreSQL schema.
 
 ## Possible improvements
 
 - expand evaluation cases and supported analytics questions
-- add database-level read-only credentials, query timeouts, and row limits
 - measure configured LLM accuracy, latency, and failure modes in a controlled environment
 - extend schema coverage and support additional SQL dialects

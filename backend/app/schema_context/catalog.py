@@ -1,11 +1,20 @@
 from app.schema_context.models import ColumnContext, SchemaContext, TableContext
 
+ANALYTICS_TABLE_NAMES = (
+    "customers",
+    "products",
+    "orders",
+    "order_items",
+    "refunds",
+)
+
 DEMO_SCHEMA_CONTEXT = SchemaContext(
     database_name="demo_ecommerce",
     description="Small synthetic e-commerce database for safe Text-to-SQL demos and backend tests.",
     safe_query_rules=[
         "Only read-only SELECT or WITH queries should be executed.",
         "Generated SQL must be validated before execution.",
+        "Generated queries may use only the listed analytics tables.",
         "Unsafe statements such as UPDATE, DELETE, DROP, INSERT, ALTER, and TRUNCATE are blocked.",
     ],
     tables=[

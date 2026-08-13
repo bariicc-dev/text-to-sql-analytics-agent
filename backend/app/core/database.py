@@ -11,12 +11,23 @@ class Base(DeclarativeBase):
 
 
 settings = get_settings()
-engine = create_engine(settings.database_url)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+application_engine = create_engine(settings.application_database_url)
+generated_query_engine = create_engine(settings.generated_query_database_url)
+
+ApplicationSessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=application_engine,
+)
+GeneratedQuerySessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=generated_query_engine,
+)
 
 
 def get_db() -> Generator[Session, None, None]:
-    db = SessionLocal()
+    db = ApplicationSessionLocal()
     try:
         yield db
     finally:

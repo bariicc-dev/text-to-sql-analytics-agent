@@ -23,6 +23,7 @@ def build_sql_prompt(question: str) -> str:
         "Instructions:",
         "- Return only one SQL query in the sql field.",
         "- Use only SELECT or WITH queries.",
+        "- Use only the analytics tables listed in the schema context.",
         "- Do not use INSERT, UPDATE, DELETE, DROP, ALTER, CREATE, TRUNCATE, or other data modification statements.",
         "- Do not guess table or column names that are not in the schema context.",
         "- Keep the reason short.",

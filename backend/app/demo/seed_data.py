@@ -3,7 +3,8 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
-from app.core.database import Base, SessionLocal, engine
+from app.core.database import ApplicationSessionLocal, Base, application_engine
+from app.core.database_permissions import apply_generated_query_permissions
 from app.models.database_models import Customer, Order, OrderItem, Product, Refund
 
 
@@ -62,9 +63,10 @@ def seed_database(session: Session) -> None:
 
 
 def main() -> None:
-    Base.metadata.create_all(bind=engine)
-    with SessionLocal() as session:
+    Base.metadata.create_all(bind=application_engine)
+    with ApplicationSessionLocal() as session:
         seed_database(session)
+        apply_generated_query_permissions(session)
 
 
 if __name__ == "__main__":
