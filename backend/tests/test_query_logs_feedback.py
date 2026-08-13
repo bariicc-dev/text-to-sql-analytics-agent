@@ -1,76 +1,10 @@
-from collections.abc import Generator
-from datetime import date
-from decimal import Decimal
-
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import StaticPool
 
-from app.core.database import Base, get_db
-from app.main import app
-from app.models.database_models import Customer, Feedback, Order, OrderItem, Product, QueryLog
-
-
-@pytest.fixture()
-def test_client() -> Generator[tuple[TestClient, sessionmaker[Session]], None, None]:
-    engine = create_engine(
-        "sqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    Base.metadata.create_all(bind=engine)
-
-    def override_get_db() -> Generator[Session, None, None]:
-        db = testing_session_local()
-        try:
-            yield db
-        finally:
-            db.close()
-
-    app.dependency_overrides[get_db] = override_get_db
-    try:
-        yield TestClient(app), testing_session_local
-    finally:
-        app.dependency_overrides.clear()
-        Base.metadata.drop_all(bind=engine)
-
-
-def seed_chat_data(session_factory: sessionmaker[Session]) -> None:
-    with session_factory() as db:
-        customer = Customer(
-            id=1,
-            name="Nora Adams",
-            email="nora.adams@example.com",
-            segment="Consumer",
-            country="France",
-            created_at=date(2025, 1, 8),
-        )
-        product = Product(
-            id=1,
-            name="Everyday Backpack",
-            category="Bags",
-            unit_price=Decimal("79.00"),
-            unit_cost=Decimal("32.00"),
-        )
-        order = Order(
-            id=1,
-            customer_id=1,
-            order_date=date(2025, 4, 2),
-            status="completed",
-            channel="web",
-        )
-        order_item = OrderItem(
-            id=1,
-            order_id=1,
-            product_id=1,
-            quantity=2,
-            unit_price=Decimal("79.00"),
-        )
-        db.add_all([customer, product, order, order_item])
-        db.commit()
+from app.models.database_models import Feedback, QueryLog
+from app.models.schemas import MAX_QUESTION_LENGTH
+from app.providers.base import QueryCandidate
 
 
 def create_log(session_factory: sessionmaker[Session], safety_status: str = "safe") -> QueryLog:
@@ -88,10 +22,9 @@ def create_log(session_factory: sessionmaker[Session], safety_status: str = "saf
 
 
 def test_chat_creates_query_log_for_matched_question(
-    test_client: tuple[TestClient, sessionmaker[Session]],
+    seeded_test_client: tuple[TestClient, sessionmaker[Session]],
 ) -> None:
-    client, session_factory = test_client
-    seed_chat_data(session_factory)
+    client, session_factory = seeded_test_client
 
     response = client.post("/chat", json={"question": "What are the top 5 products by revenue?"})
 
@@ -120,6 +53,79 @@ def test_chat_creates_query_log_for_unmatched_question(
         assert log.safety_status == "not_generated"
         assert log.generated_sql is None
         assert log.error_message == "No demo query matched this question."
+
+
+def test_chat_strips_question_whitespace(
+    test_client: tuple[TestClient, sessionmaker[Session]],
+) -> None:
+    client, session_factory = test_client
+
+    response = client.post("/chat", json={"question": "  Which warehouse is slowest?  "})
+
+    assert response.status_code == 200
+    with session_factory() as db:
+        log = db.query(QueryLog).one()
+        assert log.question == "Which warehouse is slowest?"
+
+
+@pytest.mark.parametrize("question", ["", "   "])
+def test_chat_rejects_blank_question(
+    question: str,
+    test_client: tuple[TestClient, sessionmaker[Session]],
+) -> None:
+    client, _ = test_client
+
+    response = client.post("/chat", json={"question": question})
+
+    assert response.status_code == 422
+
+
+def test_chat_rejects_question_over_length_limit(
+    test_client: tuple[TestClient, sessionmaker[Session]],
+) -> None:
+    client, _ = test_client
+
+    response = client.post("/chat", json={"question": "x" * (MAX_QUESTION_LENGTH + 1)})
+
+    assert response.status_code == 422
+
+
+def test_chat_rolls_back_and_logs_execution_error(
+    test_client: tuple[TestClient, sessionmaker[Session]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, session_factory = test_client
+    rollback_calls: list[Session] = []
+    original_rollback = Session.rollback
+
+    class InvalidSqlProvider:
+        def generate_query(self, question: str) -> QueryCandidate:
+            return QueryCandidate(
+                category="invalid_sql",
+                sql="SELECT missing_column FROM products LIMIT 5",
+                source="test",
+            )
+
+    def track_rollback(db: Session) -> None:
+        rollback_calls.append(db)
+        original_rollback(db)
+
+    monkeypatch.setattr("app.services.chat_service.get_query_provider", InvalidSqlProvider)
+    monkeypatch.setattr(Session, "rollback", track_rollback)
+
+    response = client.post("/chat", json={"question": "Run the failing query."})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["answer"] == "The query could not be executed safely."
+    assert data["safety_status"] == "error"
+    assert "no such column" not in str(data).lower()
+    assert len(rollback_calls) == 1
+
+    with session_factory() as db:
+        log = db.query(QueryLog).one()
+        assert log.safety_status == "error"
+        assert log.error_message == "The query could not be executed safely."
 
 
 def test_read_query_logs_returns_logs(test_client: tuple[TestClient, sessionmaker[Session]]) -> None:

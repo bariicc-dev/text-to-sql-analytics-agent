@@ -22,9 +22,6 @@ class LLMQueryProvider:
         self.settings = settings or get_settings()
         self.client = client
 
-    def build_prompt_context(self, question: str) -> str:
-        return build_sql_prompt(question)
-
     @property
     def status(self) -> str:
         provider_name = (self.settings.llm_provider or "").lower().strip()
@@ -35,7 +32,7 @@ class LLMQueryProvider:
             "model": self.settings.llm_model,
             "messages": [
                 {"role": "system", "content": _SYSTEM_MESSAGE},
-                {"role": "user", "content": self.build_prompt_context(question)},
+                {"role": "user", "content": build_sql_prompt(question)},
             ],
             "temperature": 0,
         }

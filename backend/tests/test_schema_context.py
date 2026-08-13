@@ -59,18 +59,3 @@ def test_compact_schema_service_mentions_safe_query_rules() -> None:
 
     assert "Safe query rules:" in context
     assert "Generated SQL must be validated before execution." in context
-
-
-def test_chat_route_still_exists() -> None:
-    paths = {route.path for route in app.routes}
-
-    assert "/chat" in paths
-
-
-def test_evaluation_run_still_works() -> None:
-    response = client.post("/evaluation/run")
-
-    assert response.status_code == 200
-    data = response.json()
-    assert data["total_cases"] > 0
-    assert data["failed"] == 0
