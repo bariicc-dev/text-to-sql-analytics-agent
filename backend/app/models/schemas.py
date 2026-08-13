@@ -1,8 +1,10 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+MAX_QUESTION_LENGTH = 500
 
 
 class CustomerRead(BaseModel):
@@ -123,11 +125,14 @@ class SqlValidationResponse(BaseModel):
     is_safe: bool
     reason: str
     normalized_sql: str
-    blocked_keywords: list[str] = []
+    blocked_keywords: list[str] = Field(default_factory=list)
 
 
 class ChatRequest(BaseModel):
-    question: str
+    question: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_QUESTION_LENGTH),
+    ]
 
 
 class ChatResponse(BaseModel):

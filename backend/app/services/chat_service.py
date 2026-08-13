@@ -1,3 +1,4 @@
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.models.schemas import ChatResponse
@@ -10,6 +11,8 @@ from app.services.sql_validation_service import validate_sql
 
 _NO_MATCH_MESSAGE = "No demo query matched this question."
 _EXECUTION_ERROR_MESSAGE = "The query could not be executed safely."
+_PROVIDER_ERROR_MESSAGE = "The query provider could not generate SQL."
+_UNSAFE_REQUEST_MESSAGE = "This request was blocked by the safety layer."
 
 
 def answer_question(question: str, db: Session) -> ChatResponse:
@@ -23,8 +26,15 @@ def answer_question(question: str, db: Session) -> ChatResponse:
             safety_status=candidate.safety_status,
             error_message=reason,
         )
+        if candidate.safety_status == "blocked":
+            answer = _UNSAFE_REQUEST_MESSAGE
+        elif candidate.source == "demo":
+            answer = FALLBACK_MESSAGE
+        else:
+            answer = _PROVIDER_ERROR_MESSAGE
+
         return ChatResponse(
-            answer=FALLBACK_MESSAGE,
+            answer=answer,
             sql=None,
             rows=[],
             explanation=reason,
@@ -52,7 +62,8 @@ def answer_question(question: str, db: Session) -> ChatResponse:
 
     try:
         rows = execute_read_query(db=db, sql=validation.normalized_sql)
-    except Exception:
+    except SQLAlchemyError:
+        db.rollback()
         create_query_log(
             db=db,
             question=question,

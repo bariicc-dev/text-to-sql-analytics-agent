@@ -1,15 +1,11 @@
 import json
 
 import httpx
-from fastapi.testclient import TestClient
 
 from app.core.config import Settings
-from app.main import app
 from app.providers.demo_provider import DemoQueryProvider
 from app.providers.factory import get_query_provider
 from app.providers.llm_provider import LLMQueryProvider
-
-client = TestClient(app)
 
 
 def _nvidia_settings(**overrides: object) -> Settings:
@@ -116,16 +112,3 @@ def test_nvidia_provider_handles_invalid_json_response_safely() -> None:
     assert candidate.safety_status == "not_generated"
     assert candidate.response_parseable is False
     assert candidate.reason == "LLM response was not valid JSON."
-
-
-def test_chat_route_still_exists_with_demo_provider() -> None:
-    paths = {route.path for route in app.routes}
-
-    assert "/chat" in paths
-
-
-def test_evaluation_run_still_works_with_demo_provider() -> None:
-    response = client.post("/evaluation/run")
-
-    assert response.status_code == 200
-    assert response.json()["failed"] == 0

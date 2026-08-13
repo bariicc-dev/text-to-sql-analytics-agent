@@ -1,11 +1,19 @@
+from fastapi.testclient import TestClient
+
 from app.main import app
 from app.services.sql_validation_service import validate_sql
 
+client = TestClient(app)
 
-def test_validate_sql_route_is_registered() -> None:
-    paths = {route.path for route in app.routes}
 
-    assert "/validate-sql" in paths
+def test_validate_sql_endpoint_returns_validation_result() -> None:
+    response = client.post(
+        "/validate-sql",
+        json={"sql": "SELECT id, name FROM products LIMIT 5"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["is_safe"] is True
 
 
 def test_allows_select_query() -> None:

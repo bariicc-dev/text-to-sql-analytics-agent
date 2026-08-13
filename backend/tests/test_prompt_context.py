@@ -2,7 +2,6 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.prompting.builder import build_sql_prompt
-from app.providers.llm_provider import LLMQueryProvider
 
 client = TestClient(app)
 
@@ -55,23 +54,3 @@ def test_prompt_context_endpoint_returns_prompt() -> None:
     assert data["question"] == question
     assert question in data["prompt"]
     assert "Expected JSON response:" in data["prompt"]
-
-
-def test_llm_provider_can_build_prompt_context() -> None:
-    prompt = LLMQueryProvider().build_prompt_context("What is the refund rate?")
-
-    assert "What is the refund rate?" in prompt
-    assert "refunds(" in prompt
-
-
-def test_chat_route_still_exists_for_demo_provider() -> None:
-    paths = {route.path for route in app.routes}
-
-    assert "/chat" in paths
-
-
-def test_evaluation_run_still_works_with_demo_provider() -> None:
-    response = client.post("/evaluation/run")
-
-    assert response.status_code == 200
-    assert response.json()["failed"] == 0

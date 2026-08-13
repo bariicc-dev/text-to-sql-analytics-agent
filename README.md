@@ -83,7 +83,7 @@ python -m pip install -r requirements.txt
 python -m pytest
 ```
 
-GitHub Actions runs the backend test suite on pull requests.
+GitHub Actions runs the backend test suite on pull requests and pushes to `main`.
 
 ## Architecture
 

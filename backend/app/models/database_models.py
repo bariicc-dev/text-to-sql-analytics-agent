@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, Text
@@ -82,7 +82,11 @@ class QueryLog(Base):
     generated_sql: Mapped[str | None] = mapped_column(Text)
     safety_status: Mapped[str] = mapped_column(String(40), nullable=False, default="not_checked")
     error_message: Mapped[str | None] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(UTC),
+    )
 
     feedback_items: Mapped[list["Feedback"]] = relationship(back_populates="query_log")
 
@@ -95,7 +99,11 @@ class Feedback(Base):
     customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id"))
     rating: Mapped[int] = mapped_column(Integer, nullable=False)
     comment: Mapped[str | None] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(UTC),
+    )
 
     query_log: Mapped[QueryLog] = relationship(back_populates="feedback_items")
     customer: Mapped[Customer | None] = relationship(back_populates="feedback_items")
