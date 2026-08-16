@@ -67,13 +67,19 @@ curl -X POST http://localhost:8000/evaluation/run
 curl -X POST http://localhost:8000/evaluation/compare
 ```
 
-If the LLM provider is not configured, the comparison reports `not_configured` for that provider instead of failing. More request examples are in [docs/api_examples.md](docs/api_examples.md).
+If the LLM provider is not configured, the comparison reports `not_configured` for that provider instead of failing.
 
 To stop the services:
 
 ```bash
 docker compose down
 ```
+
+## Guides
+
+- [Local demo guide](docs/demo.md)
+- [Presentation notes](docs/presentation_notes.md)
+- [API examples](docs/api_examples.md)
 
 ## Run the tests
 
@@ -109,6 +115,8 @@ backend/
 docs/
   api_examples.md
   database_schema.md
+  demo.md
+  presentation_notes.md
 ```
 
 ## Provider design
